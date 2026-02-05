@@ -1,0 +1,69 @@
+{
+  "routes": [
+    {
+      "id": "route_malabar",
+      "name": "Malabar Coast Run",
+      "from": "Goa",
+      "to": "Cochin",
+      "description": "A short voyage down the Malabar coast. Low risk, modest returns.",
+      "travelTime": 12,
+      "baseRisk": 0.05,
+      "profitMultiplier": 1.3,
+      "goodsAffinity": ["good_pepper", "good_ginger", "good_cinnamon"],
+      "faction": "crown",
+      "unlockRequirement": "trade_routes"
+    },
+    {
+      "id": "route_hormuz",
+      "name": "Hormuz Passage",
+      "from": "Goa",
+      "to": "Hormuz",
+      "description": "Through the Arabian Sea to the Persian Gulf. Moderate risk, good profit on luxury goods.",
+      "travelTime": 48,
+      "baseRisk": 0.15,
+      "profitMultiplier": 1.8,
+      "goodsAffinity": ["good_silk", "good_porcelain", "good_cloves"],
+      "faction": "old_routes",
+      "unlockRequirement": "trade_routes"
+    },
+    {
+      "id": "route_malacca",
+      "name": "Straits of Malacca",
+      "from": "Goa",
+      "to": "Malacca",
+      "description": "Long voyage to the eastern spice markets. High risk, high reward.",
+      "travelTime": 96,
+      "baseRisk": 0.25,
+      "profitMultiplier": 2.2,
+      "goodsAffinity": ["good_cloves", "good_nutmeg", "good_silk"],
+      "faction": "free_traders",
+      "unlockRequirement": "trade_routes"
+    },
+    {
+      "id": "route_macau",
+      "name": "China Trade",
+      "from": "Goa",
+      "to": "Macau",
+      "description": "The legendary silk and porcelain route. Very long, risky, but immensely profitable.",
+      "travelTime": 144,
+      "baseRisk": 0.30,
+      "profitMultiplier": 2.8,
+      "goodsAffinity": ["good_silk", "good_porcelain", "good_pepper"],
+      "faction": "crown",
+      "unlockRequirement": "bulk_trading"
+    },
+    {
+      "id": "route_africa",
+      "name": "African Coast",
+      "from": "Goa",
+      "to": "Mozambique",
+      "description": "Trade with Portuguese Africa. Moderate journey with unique opportunities.",
+      "travelTime": 72,
+      "baseRisk": 0.20,
+      "profitMultiplier": 1.6,
+      "goodsAffinity": ["good_indigo", "good_cinnamon"],
+      "faction": "crown",
+      "unlockRequirement": "trade_routes"
+    }
+  ]
+}

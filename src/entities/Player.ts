@@ -19,6 +19,14 @@ export class Player extends Phaser.GameObjects.Sprite {
   private inventory: { item: string; quantity: number }[] = [];
   private maxCarryCapacity = 20;
 
+  // Player skills (0-100 scale, improve through use)
+  private skills = {
+    negotiation: 0,   // Affects buy/sell price spread
+    appraisal: 0,     // Ability to see true item quality/value
+    reputation: 0,    // General trust from NPCs
+    navigation: 0,    // Reduces travel time/risk on trade routes
+  };
+
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
     
@@ -299,5 +307,114 @@ export class Player extends Phaser.GameObjects.Sprite {
   public getCarryCapacity(): { current: number; max: number } {
     const current = this.inventory.reduce((sum, item) => sum + item.quantity, 0);
     return { current, max: this.maxCarryCapacity };
+  }
+
+  // Skill management
+  public getSkills(): { negotiation: number; appraisal: number; reputation: number; navigation: number } {
+    return { ...this.skills };
+  }
+
+  public getSkill(skill: keyof typeof this.skills): number {
+    return this.skills[skill];
+  }
+
+  /**
+   * Improve a skill through use
+   * Skills improve slowly and cap at 100
+   */
+  public improveSkill(skill: keyof typeof this.skills, amount: number = 0.5): void {
+    const oldValue = this.skills[skill];
+    this.skills[skill] = Math.min(100, this.skills[skill] + amount);
+
+    if (Math.floor(this.skills[skill]) > Math.floor(oldValue)) {
+      // Skill level increased (whole number)
+      this.scene.events.emit('skillUp', {
+        skill,
+        newLevel: Math.floor(this.skills[skill]),
+      });
+    }
+
+    this.scene.events.emit('skillChange', {
+      skill,
+      value: this.skills[skill],
+    });
+  }
+
+  /**
+   * Called after completing a trade - improves negotiation
+   */
+  public completeTrade(profitable: boolean): void {
+    // Improve negotiation skill
+    const improvement = profitable ? 0.5 : 0.2;
+    this.improveSkill('negotiation', improvement);
+  }
+
+  /**
+   * Called after examining goods - improves appraisal
+   */
+  public examineGoods(): void {
+    this.improveSkill('appraisal', 0.3);
+  }
+
+  /**
+   * Called after positive NPC interaction - improves reputation
+   */
+  public positiveInteraction(): void {
+    this.improveSkill('reputation', 0.2);
+  }
+
+  /**
+   * Called after completing a trade route - improves navigation
+   */
+  public completeTradeRoute(success: boolean): void {
+    const improvement = success ? 1.0 : 0.3;
+    this.improveSkill('navigation', improvement);
+  }
+
+  /**
+   * Get negotiation bonus (percentage reduction in buy price)
+   * At skill 0: 0%, at skill 100: 15%
+   */
+  public getNegotiationBonus(): number {
+    return this.skills.negotiation * 0.0015;
+  }
+
+  /**
+   * Get appraisal accuracy (ability to see true prices)
+   * At skill 0: 0%, at skill 100: 100%
+   */
+  public getAppraisalAccuracy(): number {
+    return this.skills.appraisal / 100;
+  }
+
+  /**
+   * Get navigation bonus (reduces trade route risk/time)
+   * At skill 0: 0%, at skill 100: 20%
+   */
+  public getNavigationBonus(): number {
+    return this.skills.navigation * 0.002;
+  }
+
+  /**
+   * Set max carry capacity (used by ProgressionSystem)
+   */
+  public setMaxCarryCapacity(capacity: number): void {
+    this.maxCarryCapacity = capacity;
+    this.scene.events.emit('capacityChange', { current: this.getCarryCapacity().current, max: capacity });
+  }
+
+  /**
+   * Set skills directly (for save/load)
+   */
+  public setSkills(skills: { negotiation: number; appraisal: number; reputation: number; navigation: number }): void {
+    this.skills = { ...skills };
+  }
+
+  /**
+   * Set gold directly (for save/load)
+   */
+  public setGold(amount: number): void {
+    this.gold = amount;
+    this.scene.events.emit('goldChange', this.gold);
   }
 }

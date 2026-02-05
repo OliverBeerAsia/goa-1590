@@ -211,6 +211,27 @@ export class CharacterGenerator {
     graphics.generateTexture(textureKey, SHEET_WIDTH, SHEET_HEIGHT);
     graphics.destroy();
 
+    // Add frame definitions for animation system
+    const texture = this.scene.textures.get(textureKey);
+    let frameIndex = 0;
+    for (let row = 0; row < SHEET_ROWS; row++) {
+      for (let col = 0; col < SHEET_COLS; col++) {
+        texture.add(
+          frameIndex,
+          0, // sourceIndex (0 for single-source textures)
+          col * CHAR_WIDTH,
+          row * CHAR_HEIGHT,
+          CHAR_WIDTH,
+          CHAR_HEIGHT
+        );
+        frameIndex++;
+      }
+    }
+
+    // Create animations for this character
+    const animPrefix = config.type === CharacterType.PLAYER ? 'player' : `npc_${config.type}`;
+    this.createAnimations(textureKey, animPrefix);
+
     return textureKey;
   }
 

@@ -5,6 +5,14 @@ import { Player } from './Player';
  * NPC - Non-player characters in 16th century Goa
  * Includes merchants, officials, and other denizens of the marketplace
  */
+// NPC Schedule entry
+interface ScheduleEntry {
+  hour: number;
+  location: string;
+  activity: 'trading' | 'walking' | 'resting' | 'praying' | 'drinking';
+  position?: { x: number; y: number };
+}
+
 export class NPC extends Phaser.GameObjects.Sprite {
   private npcId: string = '';
   private npcName: string;
@@ -20,6 +28,14 @@ export class NPC extends Phaser.GameObjects.Sprite {
   private hasAvailableQuest = false;
   private animationsCreated = false;
   private idleTimer = 0;
+
+  // Schedule system
+  private schedule: ScheduleEntry[] = [];
+  private currentActivity: string = 'trading';
+  private homeLocation: string = 'ribeira_grande';
+  private isMovingToTarget = false;
+  private targetPosition: { x: number; y: number } | null = null;
+  private moveSpeed = 30;
 
   // NPC type to character texture mapping
   private static readonly textureMap: { [key: string]: string } = {
@@ -81,6 +97,206 @@ export class NPC extends Phaser.GameObjects.Sprite {
     this.setInteractive({ useHandCursor: true });
     this.on('pointerover', () => this.onHover());
     this.on('pointerout', () => this.onHoverEnd());
+
+    // Set up default schedule based on NPC type
+    this.initializeSchedule();
+
+    // Listen for time changes
+    this.scene.events.on('hourChange', this.onHourChange, this);
+  }
+
+  /**
+   * Initialize NPC schedule based on their type and role
+   */
+  private initializeSchedule(): void {
+    // Default schedule for merchants - at market during trading hours
+    switch (this.npcType) {
+      case 'npc_portuguese':
+      case 'npc_hindu':
+      case 'npc_arab':
+        // Merchants: trade in morning and evening, rest in afternoon
+        this.schedule = [
+          { hour: 7, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 8, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 9, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 10, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 11, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 12, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 13, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 14, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 15, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 16, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 17, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 18, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 19, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 20, location: 'tavern', activity: 'drinking' },
+          { hour: 21, location: 'tavern', activity: 'drinking' },
+        ];
+        break;
+
+      case 'npc_official':
+        // Officials: work at customs/alfandega
+        this.schedule = [
+          { hour: 7, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 8, location: 'alfandega', activity: 'trading' },
+          { hour: 9, location: 'alfandega', activity: 'trading' },
+          { hour: 10, location: 'alfandega', activity: 'trading' },
+          { hour: 11, location: 'alfandega', activity: 'trading' },
+          { hour: 12, location: 'alfandega', activity: 'resting' },
+          { hour: 13, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 14, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 15, location: 'alfandega', activity: 'trading' },
+          { hour: 16, location: 'alfandega', activity: 'trading' },
+          { hour: 17, location: 'alfandega', activity: 'trading' },
+          { hour: 18, location: 'ribeira_grande', activity: 'walking' },
+        ];
+        break;
+
+      case 'npc_sailor':
+        // Sailors: at docks during day, tavern at night
+        this.schedule = [
+          { hour: 6, location: 'docks', activity: 'trading' },
+          { hour: 7, location: 'docks', activity: 'trading' },
+          { hour: 8, location: 'docks', activity: 'trading' },
+          { hour: 9, location: 'docks', activity: 'trading' },
+          { hour: 10, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 11, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 12, location: 'tavern', activity: 'drinking' },
+          { hour: 13, location: 'tavern', activity: 'drinking' },
+          { hour: 14, location: 'docks', activity: 'trading' },
+          { hour: 15, location: 'docks', activity: 'trading' },
+          { hour: 16, location: 'docks', activity: 'trading' },
+          { hour: 17, location: 'tavern', activity: 'drinking' },
+          { hour: 18, location: 'tavern', activity: 'drinking' },
+          { hour: 19, location: 'tavern', activity: 'drinking' },
+          { hour: 20, location: 'tavern', activity: 'drinking' },
+        ];
+        break;
+
+      case 'npc_monk':
+        // Monks: prayer and cathedral
+        this.schedule = [
+          { hour: 5, location: 'se_cathedral', activity: 'praying' },
+          { hour: 6, location: 'se_cathedral', activity: 'praying' },
+          { hour: 7, location: 'se_cathedral', activity: 'praying' },
+          { hour: 8, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 9, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 10, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 11, location: 'se_cathedral', activity: 'praying' },
+          { hour: 12, location: 'se_cathedral', activity: 'praying' },
+          { hour: 13, location: 'se_cathedral', activity: 'resting' },
+          { hour: 14, location: 'old_quarter', activity: 'walking' },
+          { hour: 15, location: 'old_quarter', activity: 'trading' },
+          { hour: 16, location: 'ribeira_grande', activity: 'walking' },
+          { hour: 17, location: 'se_cathedral', activity: 'praying' },
+          { hour: 18, location: 'se_cathedral', activity: 'praying' },
+        ];
+        break;
+
+      case 'npc_porter':
+        // Porters: at docks and warehouse
+        this.schedule = [
+          { hour: 6, location: 'docks', activity: 'trading' },
+          { hour: 7, location: 'docks', activity: 'trading' },
+          { hour: 8, location: 'warehouse_district', activity: 'trading' },
+          { hour: 9, location: 'warehouse_district', activity: 'trading' },
+          { hour: 10, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 11, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 12, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 13, location: 'docks', activity: 'trading' },
+          { hour: 14, location: 'docks', activity: 'trading' },
+          { hour: 15, location: 'warehouse_district', activity: 'trading' },
+          { hour: 16, location: 'warehouse_district', activity: 'trading' },
+          { hour: 17, location: 'docks', activity: 'trading' },
+          { hour: 18, location: 'tavern', activity: 'drinking' },
+        ];
+        break;
+
+      case 'npc_soldier':
+        // Soldiers: patrol routes
+        this.schedule = [
+          { hour: 6, location: 'docks', activity: 'walking' },
+          { hour: 7, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 8, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 9, location: 'alfandega', activity: 'trading' },
+          { hour: 10, location: 'alfandega', activity: 'trading' },
+          { hour: 11, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 12, location: 'ribeira_grande', activity: 'resting' },
+          { hour: 13, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 14, location: 'docks', activity: 'trading' },
+          { hour: 15, location: 'docks', activity: 'trading' },
+          { hour: 16, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 17, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 18, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 19, location: 'old_quarter', activity: 'walking' },
+          { hour: 20, location: 'ribeira_grande', activity: 'trading' },
+        ];
+        break;
+
+      default:
+        // Default: stay at market
+        this.schedule = [
+          { hour: 7, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 8, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 9, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 17, location: 'ribeira_grande', activity: 'trading' },
+          { hour: 18, location: 'ribeira_grande', activity: 'trading' },
+        ];
+    }
+  }
+
+  /**
+   * Handle hour change - update NPC activity based on schedule
+   */
+  private onHourChange(timeData: { hour: number }): void {
+    // Find schedule entry for current hour
+    const entry = this.schedule.find(s => s.hour === timeData.hour);
+    if (entry) {
+      this.currentActivity = entry.activity;
+
+      // Check if NPC should move to a different location
+      const currentLocation = this.scene.registry.get('currentLocation') || 'ribeira_grande';
+      if (entry.location !== currentLocation) {
+        // NPC should be in a different location - they'll "disappear" from here
+        // This is handled by the location system checking NPC schedules
+      }
+    }
+  }
+
+  /**
+   * Check if NPC should be visible at current location and time
+   */
+  public shouldBeVisibleAt(location: string, hour: number): boolean {
+    const entry = this.schedule.find(s => s.hour === hour);
+    if (!entry) {
+      // No schedule entry - default to home location during market hours
+      if (hour >= 7 && hour <= 19) {
+        return location === this.homeLocation;
+      }
+      return false;
+    }
+    return entry.location === location;
+  }
+
+  /**
+   * Get current activity for dialogue/interaction purposes
+   */
+  public getCurrentActivity(): string {
+    return this.currentActivity;
+  }
+
+  /**
+   * Set NPC home location
+   */
+  public setHomeLocation(location: string): void {
+    this.homeLocation = location;
+  }
+
+  /**
+   * Set custom schedule for this NPC
+   */
+  public setSchedule(schedule: ScheduleEntry[]): void {
+    this.schedule = schedule;
   }
 
   public setNpcId(id: string): void {
@@ -201,11 +417,86 @@ export class NPC extends Phaser.GameObjects.Sprite {
       this.checkForQuests();
     }
 
+    // Handle movement if NPC is walking to a target
+    if (this.isMovingToTarget && this.targetPosition) {
+      this.updateMovement(delta);
+    }
+
     // Check if player is nearby
     this.checkPlayerProximity();
 
     // Update idle animation
     this.updateIdleAnimation(delta);
+
+    // Activity-based behaviors
+    this.updateActivityBehavior(delta);
+  }
+
+  /**
+   * Update NPC movement towards target
+   */
+  private updateMovement(delta: number): void {
+    if (!this.targetPosition) return;
+
+    const dx = this.targetPosition.x - this.x;
+    const dy = this.targetPosition.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 5) {
+      // Reached target
+      this.isMovingToTarget = false;
+      this.targetPosition = null;
+      return;
+    }
+
+    // Move towards target
+    const moveAmount = (this.moveSpeed * delta) / 1000;
+    const ratio = moveAmount / distance;
+
+    this.x += dx * ratio;
+    this.y += dy * ratio;
+  }
+
+  /**
+   * Set target position for NPC to walk to
+   */
+  public walkTo(x: number, y: number): void {
+    this.targetPosition = { x, y };
+    this.isMovingToTarget = true;
+  }
+
+  /**
+   * Update behavior based on current activity
+   */
+  private updateActivityBehavior(_delta: number): void {
+    // Different behaviors for different activities
+    switch (this.currentActivity) {
+      case 'walking':
+        // Occasional random movement when walking
+        if (Math.random() < 0.001 && !this.isMovingToTarget) {
+          const offsetX = (Math.random() - 0.5) * 40;
+          const offsetY = (Math.random() - 0.5) * 20;
+          this.walkTo(this.x + offsetX, this.y + offsetY);
+        }
+        break;
+
+      case 'resting':
+        // NPCs rest more quietly, less animation
+        break;
+
+      case 'praying':
+        // Could add prayer animation
+        break;
+
+      case 'drinking':
+        // Could add drinking animation, swaying
+        break;
+
+      case 'trading':
+      default:
+        // Normal merchant behavior - handled by idle animation
+        break;
+    }
   }
 
   /**
@@ -383,6 +674,9 @@ export class NPC extends Phaser.GameObjects.Sprite {
   }
 
   public destroy(fromScene?: boolean): void {
+    // Remove event listeners
+    this.scene.events.off('hourChange', this.onHourChange, this);
+
     // Clean up child objects
     if (this.nameText) {
       this.nameText.destroy();

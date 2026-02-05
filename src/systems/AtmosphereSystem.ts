@@ -1,16 +1,19 @@
 import Phaser from 'phaser';
+import { LightingSystem } from './LightingSystem';
 
 /**
  * AtmosphereSystem - Manages dynamic lighting, shadows, and visual atmosphere
- * 
+ *
  * Creates the mood and feel of 16th century Goa through:
- * - Time-of-day lighting transitions
+ * - Time-of-day lighting transitions with per-minute interpolation
+ * - Enhanced golden hour effects
  * - Location-specific atmospheres
  * - Shadow casting based on sun position
  * - Interior/exterior lighting differences
+ * - Integration with point light system
  */
 
-interface LightingConfig {
+export interface LightingConfig {
   ambientColor: number;
   ambientAlpha: number;
   shadowColor: number;
@@ -30,26 +33,34 @@ interface LocationAtmosphere {
 
 export class AtmosphereSystem {
   private scene: Phaser.Scene;
-  
+
   // Lighting layers
   private ambientOverlay: Phaser.GameObjects.Graphics | null = null;
   private shadowLayer: Phaser.GameObjects.Graphics | null = null;
   private vignetteOverlay: Phaser.GameObjects.Graphics | null = null;
-  
+
+  // Point light system integration
+  private lightingSystem: LightingSystem | null = null;
+
   // Particle emitters
   private dustEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private smokeEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private particleContainer: Phaser.GameObjects.Container | null = null;
-  
+
   // Current state
   private currentHour = 7;
+  private currentMinute = 0;
   private currentLighting: LightingConfig;
   private currentLocation = 'ribeira_grande';
   private isInterior = false;
   private currentParticleType: 'dust' | 'incense' | 'smoke' | 'seaSpray' | undefined;
+
+  // Smooth transition tracking
+  private isTransitioning = false;
   
   // Time-based lighting configurations
-  // Balanced Goa mood: Bright tropical days with dramatic Ultima 8 style shadows
+  // Enhanced Goa mood: Bright tropical days with dramatic Ultima 8 style shadows
+  // Golden hours (6-7 and 17-18) feature dramatically warm amber tones and extended shadows
   private readonly lightingByHour: { [hour: number]: LightingConfig } = {
     0: { ambientColor: 0x0a1428, ambientAlpha: 0.5, shadowColor: 0x000022, shadowAlpha: 0.5, shadowAngle: 0, shadowLength: 0, sunIntensity: 0 },
     1: { ambientColor: 0x0a1428, ambientAlpha: 0.5, shadowColor: 0x000022, shadowAlpha: 0.5, shadowAngle: 0, shadowLength: 0, sunIntensity: 0 },
@@ -57,8 +68,9 @@ export class AtmosphereSystem {
     3: { ambientColor: 0x0a1428, ambientAlpha: 0.45, shadowColor: 0x000022, shadowAlpha: 0.4, shadowAngle: 0, shadowLength: 0, sunIntensity: 0 },
     4: { ambientColor: 0x1a2438, ambientAlpha: 0.4, shadowColor: 0x000022, shadowAlpha: 0.3, shadowAngle: 0, shadowLength: 0, sunIntensity: 0.1 },
     5: { ambientColor: 0x5a4860, ambientAlpha: 0.25, shadowColor: 0x2a1a30, shadowAlpha: 0.4, shadowAngle: 100, shadowLength: 3.5, sunIntensity: 0.3 }, // Pre-dawn
-    6: { ambientColor: 0xffa060, ambientAlpha: 0.12, shadowColor: 0x331a10, shadowAlpha: 0.5, shadowAngle: 110, shadowLength: 3, sunIntensity: 0.5 }, // Sunrise - dramatic shadows
-    7: { ambientColor: 0xffd090, ambientAlpha: 0.06, shadowColor: 0x442a15, shadowAlpha: 0.45, shadowAngle: 120, shadowLength: 2.5, sunIntensity: 0.7 }, // Morning - warm Goa light
+    // GOLDEN HOUR SUNRISE (6-7) - Dramatically warm amber, extended shadows
+    6: { ambientColor: 0xffaa50, ambientAlpha: 0.18, shadowColor: 0x442210, shadowAlpha: 0.55, shadowAngle: 105, shadowLength: 3.5, sunIntensity: 0.45 }, // Sunrise golden hour start
+    7: { ambientColor: 0xffc070, ambientAlpha: 0.12, shadowColor: 0x442a15, shadowAlpha: 0.5, shadowAngle: 115, shadowLength: 3.0, sunIntensity: 0.6 }, // Sunrise golden hour peak
     8: { ambientColor: 0xffeedd, ambientAlpha: 0.03, shadowColor: 0x443322, shadowAlpha: 0.4, shadowAngle: 135, shadowLength: 2, sunIntensity: 0.85 },
     9: { ambientColor: 0xffffff, ambientAlpha: 0, shadowColor: 0x443322, shadowAlpha: 0.35, shadowAngle: 150, shadowLength: 1.5, sunIntensity: 0.95 }, // Bright tropical
     10: { ambientColor: 0xffffff, ambientAlpha: 0, shadowColor: 0x443322, shadowAlpha: 0.3, shadowAngle: 165, shadowLength: 1.2, sunIntensity: 1 },
@@ -68,8 +80,9 @@ export class AtmosphereSystem {
     14: { ambientColor: 0xffddaa, ambientAlpha: 0.04, shadowColor: 0x443322, shadowAlpha: 0.25, shadowAngle: 210, shadowLength: 1, sunIntensity: 0.95 },
     15: { ambientColor: 0xffddaa, ambientAlpha: 0.05, shadowColor: 0x443322, shadowAlpha: 0.3, shadowAngle: 225, shadowLength: 1.3, sunIntensity: 0.9 },
     16: { ambientColor: 0xffcc88, ambientAlpha: 0.06, shadowColor: 0x442a15, shadowAlpha: 0.35, shadowAngle: 240, shadowLength: 1.8, sunIntensity: 0.8 },
-    17: { ambientColor: 0xffaa55, ambientAlpha: 0.1, shadowColor: 0x442a15, shadowAlpha: 0.5, shadowAngle: 250, shadowLength: 2.5, sunIntensity: 0.65 }, // Golden hour - dramatic
-    18: { ambientColor: 0xff8833, ambientAlpha: 0.15, shadowColor: 0x331a10, shadowAlpha: 0.55, shadowAngle: 260, shadowLength: 3, sunIntensity: 0.45 }, // Sunset - deep shadows
+    // GOLDEN HOUR SUNSET (17-18) - Deep amber/orange, dramatically extended shadows
+    17: { ambientColor: 0xffaa40, ambientAlpha: 0.15, shadowColor: 0x442210, shadowAlpha: 0.55, shadowAngle: 255, shadowLength: 3.0, sunIntensity: 0.55 }, // Sunset golden hour start
+    18: { ambientColor: 0xff8820, ambientAlpha: 0.22, shadowColor: 0x331505, shadowAlpha: 0.6, shadowAngle: 265, shadowLength: 3.5, sunIntensity: 0.35 }, // Sunset golden hour peak
     19: { ambientColor: 0x6644aa, ambientAlpha: 0.25, shadowColor: 0x220a30, shadowAlpha: 0.45, shadowAngle: 270, shadowLength: 2.5, sunIntensity: 0.25 }, // Dusk
     20: { ambientColor: 0x2a2850, ambientAlpha: 0.35, shadowColor: 0x000022, shadowAlpha: 0.4, shadowAngle: 0, shadowLength: 0, sunIntensity: 0.1 }, // Night begins
     21: { ambientColor: 0x1a1840, ambientAlpha: 0.45, shadowColor: 0x000022, shadowAlpha: 0.45, shadowAngle: 0, shadowLength: 0, sunIntensity: 0 },
@@ -92,12 +105,22 @@ export class AtmosphereSystem {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.currentLighting = this.lightingByHour[7]; // Default to 7 AM
-    
+
     this.createParticleTextures();
     this.createLightingLayers();
     this.createParticleEmitters();
     this.setupEventListeners();
     this.applyLighting();
+
+    // Initialize point light system
+    this.lightingSystem = new LightingSystem(scene);
+  }
+
+  /**
+   * Get the LightingSystem for adding point lights
+   */
+  public getLightingSystem(): LightingSystem | null {
+    return this.lightingSystem;
   }
 
   private createParticleTextures(): void {
@@ -241,9 +264,14 @@ export class AtmosphereSystem {
   }
 
   private setupEventListeners(): void {
-    // Listen for time changes
+    // Listen for time changes (hour)
     this.scene.events.on('hourChange', (data: { hour: number }) => {
       this.updateLightingForHour(data.hour);
+    });
+
+    // Listen for time changes (minute) - for smooth per-minute interpolation
+    this.scene.events.on('minuteChange', (data: { hour: number; minute: number }) => {
+      this.updateLightingSmooth(data.hour, data.minute);
     });
 
     // Listen for location changes
@@ -259,19 +287,124 @@ export class AtmosphereSystem {
 
   private updateLightingForHour(hour: number): void {
     this.currentHour = hour;
-    
+
+    // Update point light system
+    if (this.lightingSystem) {
+      this.lightingSystem.setCurrentHour(hour);
+    }
+
     // Get lighting config for current hour
     const config = this.lightingByHour[hour] || this.lightingByHour[12];
-    
+
     // Smooth transition to new lighting
     this.transitionToLighting(config);
   }
 
+  /**
+   * Per-minute smooth lighting interpolation
+   * Provides seamless transitions between hours without visible jumps
+   */
+  public updateLightingSmooth(hour: number, minute: number): void {
+    this.currentHour = hour;
+    this.currentMinute = minute;
+
+    // Update point light system
+    if (this.lightingSystem) {
+      this.lightingSystem.setCurrentHour(hour);
+    }
+
+    // Don't interpolate if we're in a transition
+    if (this.isTransitioning) return;
+
+    // Get current and next hour configs
+    const currentConfig = this.lightingByHour[hour] || this.lightingByHour[12];
+    const nextHour = (hour + 1) % 24;
+    const nextConfig = this.lightingByHour[nextHour] || this.lightingByHour[12];
+
+    // Calculate interpolation factor (0 at minute 0, 1 at minute 59)
+    const t = minute / 60;
+
+    // Interpolate between current and next hour
+    this.currentLighting = this.interpolateConfigs(currentConfig, nextConfig, t);
+
+    // Apply the interpolated lighting immediately (no tween, since this is continuous)
+    this.applyLighting();
+
+    // Emit event for other systems that might want to react
+    this.scene.events.emit('lightingUpdate', {
+      hour,
+      minute,
+      lighting: this.currentLighting,
+      isGoldenHour: this.isGoldenHour()
+    });
+  }
+
+  /**
+   * Interpolate between two lighting configurations
+   */
+  private interpolateConfigs(config1: LightingConfig, config2: LightingConfig, t: number): LightingConfig {
+    return {
+      ambientColor: this.lerpColor(config1.ambientColor, config2.ambientColor, t),
+      ambientAlpha: Phaser.Math.Linear(config1.ambientAlpha, config2.ambientAlpha, t),
+      shadowColor: this.lerpColor(config1.shadowColor, config2.shadowColor, t),
+      shadowAlpha: Phaser.Math.Linear(config1.shadowAlpha, config2.shadowAlpha, t),
+      shadowAngle: this.lerpAngle(config1.shadowAngle, config2.shadowAngle, t),
+      shadowLength: Phaser.Math.Linear(config1.shadowLength, config2.shadowLength, t),
+      sunIntensity: Phaser.Math.Linear(config1.sunIntensity, config2.sunIntensity, t),
+    };
+  }
+
+  /**
+   * Interpolate angles correctly handling the 0/360 wrap
+   */
+  private lerpAngle(angle1: number, angle2: number, t: number): number {
+    // Handle the case where one angle is 0 (night) and the other is non-zero
+    if (angle1 === 0 && angle2 !== 0) {
+      // Transitioning from night to day - use the destination angle
+      return angle2;
+    }
+    if (angle1 !== 0 && angle2 === 0) {
+      // Transitioning from day to night - keep source angle until we reach night
+      return t < 0.8 ? angle1 : 0;
+    }
+
+    // Normal interpolation
+    let diff = angle2 - angle1;
+
+    // Handle wrap-around (e.g., from 350 to 10)
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    return angle1 + diff * t;
+  }
+
+  /**
+   * Set time directly with smooth interpolation
+   * Use this when loading saves or jumping time
+   */
+  public setTime(hour: number, minute: number = 0): void {
+    this.currentHour = hour;
+    this.currentMinute = minute;
+
+    // Update point light system
+    if (this.lightingSystem) {
+      this.lightingSystem.setCurrentHour(hour);
+    }
+
+    // Apply interpolated lighting
+    this.updateLightingSmooth(hour, minute);
+  }
+
   private transitionToLighting(targetConfig: LightingConfig): void {
+    // Don't start a new transition if one is in progress
+    if (this.isTransitioning) return;
+
+    this.isTransitioning = true;
+
     // Create a smooth transition using tweens
     const startConfig = { ...this.currentLighting };
     const progress = { value: 0 };
-    
+
     this.scene.tweens.add({
       targets: progress,
       value: 1,
@@ -279,17 +412,12 @@ export class AtmosphereSystem {
       ease: 'Sine.easeInOut',
       onUpdate: () => {
         // Interpolate all values
-        this.currentLighting = {
-          ambientColor: this.lerpColor(startConfig.ambientColor, targetConfig.ambientColor, progress.value),
-          ambientAlpha: Phaser.Math.Linear(startConfig.ambientAlpha, targetConfig.ambientAlpha, progress.value),
-          shadowColor: this.lerpColor(startConfig.shadowColor, targetConfig.shadowColor, progress.value),
-          shadowAlpha: Phaser.Math.Linear(startConfig.shadowAlpha, targetConfig.shadowAlpha, progress.value),
-          shadowAngle: Phaser.Math.Linear(startConfig.shadowAngle, targetConfig.shadowAngle, progress.value),
-          shadowLength: Phaser.Math.Linear(startConfig.shadowLength, targetConfig.shadowLength, progress.value),
-          sunIntensity: Phaser.Math.Linear(startConfig.sunIntensity, targetConfig.sunIntensity, progress.value),
-        };
+        this.currentLighting = this.interpolateConfigs(startConfig, targetConfig, progress.value);
         this.applyLighting();
       },
+      onComplete: () => {
+        this.isTransitioning = false;
+      }
     });
   }
 
@@ -402,7 +530,12 @@ export class AtmosphereSystem {
     }
   }
 
-  public update(_delta: number): void {
+  public update(delta: number): void {
+    // Update point light system for flicker effects
+    if (this.lightingSystem) {
+      this.lightingSystem.update(delta);
+    }
+
     // Adjust particle intensity based on time of day and sun
     if (this.dustEmitter && this.currentParticleType === 'dust') {
       // Dust is more visible in sunlight
@@ -419,7 +552,7 @@ export class AtmosphereSystem {
         this.dustEmitter.setParticleAlpha({ start: 0.1, end: 0 });
       }
     }
-    
+
     // Smoke rises more slowly at night (cooler air)
     if (this.smokeEmitter && (this.currentParticleType === 'smoke' || this.currentParticleType === 'incense')) {
       if (this.isNightTime()) {
@@ -428,6 +561,54 @@ export class AtmosphereSystem {
         this.smokeEmitter.setParticleSpeed(22); // Normal speed
       }
     }
+  }
+
+  /**
+   * Get the current sky color for water reflections and other effects
+   * Returns a color blended between ambient and a base sky blue
+   */
+  public getCurrentSkyColor(): number {
+    // Base sky colors for different times
+    const daySky = 0x87CEEB;  // Light sky blue
+    const sunsetSky = 0xFF7744; // Orange sunset
+    const nightSky = 0x1a1a40;  // Deep night blue
+
+    const hour = this.currentHour;
+
+    if (hour >= 6 && hour < 8) {
+      // Sunrise - blend from night to day with orange
+      const t = (hour - 6 + this.currentMinute / 60) / 2;
+      const orangeBlend = this.lerpColor(nightSky, sunsetSky, Math.min(t * 2, 1));
+      return this.lerpColor(orangeBlend, daySky, Math.max(0, (t - 0.5) * 2));
+    } else if (hour >= 8 && hour < 17) {
+      // Day
+      return daySky;
+    } else if (hour >= 17 && hour < 20) {
+      // Sunset - blend from day through orange to night
+      const t = (hour - 17 + this.currentMinute / 60) / 3;
+      if (t < 0.5) {
+        return this.lerpColor(daySky, sunsetSky, t * 2);
+      } else {
+        return this.lerpColor(sunsetSky, nightSky, (t - 0.5) * 2);
+      }
+    } else {
+      // Night
+      return nightSky;
+    }
+  }
+
+  /**
+   * Get current hour (for external systems)
+   */
+  public getCurrentHour(): number {
+    return this.currentHour;
+  }
+
+  /**
+   * Get current minute (for external systems)
+   */
+  public getCurrentMinute(): number {
+    return this.currentMinute;
   }
 
   // Get current lighting state for other systems
@@ -462,6 +643,9 @@ export class AtmosphereSystem {
 
   // Cleanup
   public destroy(): void {
+    if (this.lightingSystem) {
+      this.lightingSystem.destroy();
+    }
     if (this.ambientOverlay) {
       this.ambientOverlay.destroy();
     }
@@ -480,5 +664,33 @@ export class AtmosphereSystem {
     if (this.particleContainer) {
       this.particleContainer.destroy();
     }
+  }
+
+  /**
+   * Add a torch light at the specified position
+   */
+  public addTorch(x: number, y: number, id?: string): string | null {
+    return this.lightingSystem?.addTorch(x, y, id) || null;
+  }
+
+  /**
+   * Add a lantern light at the specified position
+   */
+  public addLantern(x: number, y: number, id?: string): string | null {
+    return this.lightingSystem?.addLantern(x, y, id) || null;
+  }
+
+  /**
+   * Add a candle light at the specified position
+   */
+  public addCandle(x: number, y: number, id?: string): string | null {
+    return this.lightingSystem?.addCandle(x, y, id) || null;
+  }
+
+  /**
+   * Remove a point light
+   */
+  public removeLight(id: string): boolean {
+    return this.lightingSystem?.removeLight(id) || false;
   }
 }

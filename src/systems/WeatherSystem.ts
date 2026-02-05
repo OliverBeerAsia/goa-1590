@@ -1,11 +1,18 @@
 import Phaser from 'phaser';
+import { WindSystem, Season as WindSeason } from './WindSystem';
 
 /**
  * WeatherSystem - Manages weather conditions and seasonal effects in 16th century Goa
- * 
+ *
  * Historical context: Goa experiences distinct monsoon seasons (June-September)
  * which dramatically affected trade - ships could not safely navigate during
  * monsoon, making it a critical gameplay element.
+ *
+ * Enhanced features:
+ * - Smooth 3-second transitions between weather states
+ * - Lightning system during heavy rain
+ * - Wind system integration
+ * - Ground wetness tracking
  */
 
 export type WeatherState = 'clear' | 'overcast' | 'rain' | 'heavyRain' | 'heatHaze' | 'fog';
@@ -18,6 +25,15 @@ interface WeatherConfig {
   particleCount: number;
   visibility: number; // 0-1, affects draw distance/fade
   soundKey?: string;
+}
+
+interface TransitionState {
+  fromWeather: WeatherState;
+  toWeather: WeatherState;
+  fromIntensity: number;
+  toIntensity: number;
+  progress: number; // 0 to 1
+  active: boolean;
 }
 
 interface SeasonConfig {
@@ -35,15 +51,40 @@ export class WeatherSystem {
   private weatherIntensity = 0;
   private weatherDuration = 0;
   private elapsedWeatherTime = 0;
-  
+
   // Particle emitters for weather effects
   private rainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private dustEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private fogOverlay: Phaser.GameObjects.Graphics | null = null;
   private heatHazeEffect: Phaser.GameObjects.Graphics | null = null;
-  
+
   // Visual overlays
   private weatherOverlay: Phaser.GameObjects.Graphics | null = null;
+
+  // Lightning system
+  private lightningOverlay: Phaser.GameObjects.Graphics | null = null;
+  private lightningTimer: number = 0;
+  private lightningActive: boolean = false;
+  private thunderDelay: number = 0;
+
+  // Smooth weather transitions
+  private transition: TransitionState = {
+    fromWeather: 'clear',
+    toWeather: 'clear',
+    fromIntensity: 0,
+    toIntensity: 0,
+    progress: 1,
+    active: false
+  };
+  private transitionTween: Phaser.Tweens.Tween | null = null;
+
+  // Ground wetness (0 to 1)
+  private groundWetness: number = 0;
+  private readonly WETNESS_INCREASE_RATE = 0.001; // Per frame during heavy rain
+  private readonly WETNESS_DECREASE_RATE = 0.0002; // Per frame when not raining
+
+  // Wind system integration
+  private windSystem: WindSystem | null = null;
   
   // Season definitions based on Goan climate
   private readonly seasons: SeasonConfig[] = [
@@ -92,6 +133,16 @@ export class WeatherSystem {
     this.setupEventListeners();
     this.createWeatherAssets();
     this.initializeWeather();
+
+    // Initialize wind system
+    this.windSystem = new WindSystem(scene);
+  }
+
+  /**
+   * Get the WindSystem for external access
+   */
+  public getWindSystem(): WindSystem | null {
+    return this.windSystem;
   }
 
   private setupEventListeners(): void {
@@ -119,14 +170,20 @@ export class WeatherSystem {
   private createWeatherAssets(): void {
     // Create rain particle texture
     this.createRainTexture();
-    
+
     // Create dust particle texture
     this.createDustTexture();
-    
+
     // Create weather overlay for fog/darkness
     this.weatherOverlay = this.scene.add.graphics();
     this.weatherOverlay.setScrollFactor(0);
     this.weatherOverlay.setDepth(9000);
+
+    // Create lightning overlay
+    this.lightningOverlay = this.scene.add.graphics();
+    this.lightningOverlay.setScrollFactor(0);
+    this.lightningOverlay.setDepth(9800);
+    this.lightningOverlay.setAlpha(0);
   }
 
   private createRainTexture(): void {
@@ -157,9 +214,14 @@ export class WeatherSystem {
   }
 
   public update(delta: number): void {
+    // Update wind system
+    if (this.windSystem) {
+      this.windSystem.update(delta);
+    }
+
     // Update weather duration
     this.elapsedWeatherTime += delta / 1000 / 60; // Convert to game minutes
-    
+
     // Check if weather should change
     if (this.weatherDuration > 0 && this.elapsedWeatherTime >= this.weatherDuration * 60) {
       this.transitionToRandomWeather();
@@ -167,6 +229,129 @@ export class WeatherSystem {
 
     // Update visual effects
     this.updateWeatherEffects(delta);
+
+    // Update lightning
+    this.updateLightning(delta);
+
+    // Update ground wetness
+    this.updateGroundWetness(delta);
+
+    // Update rain angle based on wind
+    this.updateRainWithWind();
+  }
+
+  /**
+   * Update lightning effects during storms
+   */
+  private updateLightning(delta: number): void {
+    // Only lightning during heavy rain or monsoon storms
+    const canLightning = this.currentWeather === 'heavyRain' ||
+      (this.currentWeather === 'rain' && this.weatherIntensity > 0.7 && this.currentSeason === 'monsoon');
+
+    if (!canLightning) {
+      this.lightningActive = false;
+      return;
+    }
+
+    this.lightningTimer += delta;
+
+    // Random chance for lightning (2% per frame during storms)
+    if (!this.lightningActive && Math.random() < 0.02 * (delta / 16.67)) {
+      this.triggerLightning();
+    }
+  }
+
+  /**
+   * Trigger a lightning flash
+   */
+  private triggerLightning(): void {
+    if (!this.lightningOverlay) return;
+
+    this.lightningActive = true;
+
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    // Draw full-screen flash
+    this.lightningOverlay.clear();
+    this.lightningOverlay.fillStyle(0xFFFFFF, 0.8);
+    this.lightningOverlay.fillRect(0, 0, width, height);
+
+    // Fade out the flash
+    this.scene.tweens.add({
+      targets: this.lightningOverlay,
+      alpha: { from: 0.8, to: 0 },
+      duration: 150,
+      ease: 'Expo.easeOut',
+      onComplete: () => {
+        this.lightningActive = false;
+      }
+    });
+
+    // Calculate thunder delay based on "distance" (500-3000ms)
+    this.thunderDelay = 500 + Math.random() * 2500;
+
+    // Emit lightning event for sound system
+    this.scene.events.emit('lightning', {
+      intensity: 0.8 + Math.random() * 0.2,
+      thunderDelay: this.thunderDelay
+    });
+
+    // Schedule thunder sound event
+    this.scene.time.delayedCall(this.thunderDelay, () => {
+      this.scene.events.emit('thunder', {
+        volume: 0.5 + Math.random() * 0.5,
+        distance: this.thunderDelay / 1000 // Rough distance in km
+      });
+    });
+  }
+
+  /**
+   * Update ground wetness based on weather
+   */
+  private updateGroundWetness(_delta: number): void {
+    const isRaining = this.currentWeather === 'rain' || this.currentWeather === 'heavyRain';
+
+    if (isRaining) {
+      // Increase wetness
+      const rate = this.currentWeather === 'heavyRain'
+        ? this.WETNESS_INCREASE_RATE
+        : this.WETNESS_INCREASE_RATE * 0.5;
+      this.groundWetness = Math.min(1, this.groundWetness + rate);
+    } else {
+      // Decrease wetness (slower in monsoon season)
+      const dryRate = this.currentSeason === 'monsoon'
+        ? this.WETNESS_DECREASE_RATE * 0.5
+        : this.WETNESS_DECREASE_RATE;
+      this.groundWetness = Math.max(0, this.groundWetness - dryRate);
+    }
+
+    // Emit wetness change for tile rendering
+    if (this.groundWetness > 0.01) {
+      this.scene.events.emit('groundWetnessChange', {
+        wetness: this.groundWetness,
+        darkening: this.groundWetness * 0.2 // 20% max darkening
+      });
+    }
+  }
+
+  /**
+   * Update rain particle angle based on wind
+   */
+  private updateRainWithWind(): void {
+    if (!this.rainEmitter || !this.windSystem) return;
+
+    const windVector = this.windSystem.getWindVector();
+
+    // Adjust rain speed based on wind
+    const baseSpeedX = -50; // Base slant
+    const windSpeedX = windVector.x * 100;
+
+    // Update emitter speedX config
+    (this.rainEmitter as Phaser.GameObjects.Particles.ParticleEmitter).speedX = {
+      min: baseSpeedX + windSpeedX - 20,
+      max: baseSpeedX + windSpeedX + 20
+    };
   }
 
   private updateWeatherEffects(_delta: number): void {
@@ -213,26 +398,210 @@ export class WeatherSystem {
     }
   }
 
-  public setWeather(state: WeatherState, intensity: number = 0.5, durationHours: number = 4): void {
+  /**
+   * Set weather with smooth transition
+   * @param state Target weather state
+   * @param intensity Target intensity (0-1)
+   * @param durationHours How long this weather should last
+   * @param instant If true, skip the smooth transition
+   */
+  public setWeather(state: WeatherState, intensity: number = 0.5, durationHours: number = 4, instant: boolean = false): void {
     const previousWeather = this.currentWeather;
-    this.currentWeather = state;
-    this.weatherIntensity = Math.max(0, Math.min(1, intensity));
+    const previousIntensity = this.weatherIntensity;
+
+    // Cancel any existing transition
+    if (this.transitionTween) {
+      this.transitionTween.stop();
+      this.transitionTween = null;
+    }
+
     this.weatherDuration = durationHours;
     this.elapsedWeatherTime = 0;
 
-    // Update particle effects
-    this.updateParticleEmitters();
-
-    // Emit weather change event
-    this.scene.events.emit('weatherChange', {
-      previous: previousWeather,
-      current: state,
-      intensity: this.weatherIntensity,
-      season: this.currentSeason,
-    });
+    if (instant || previousWeather === state) {
+      // Instant change
+      this.currentWeather = state;
+      this.weatherIntensity = Math.max(0, Math.min(1, intensity));
+      this.transition.active = false;
+      this.updateParticleEmitters();
+      this.emitWeatherChange(previousWeather, state, intensity);
+    } else {
+      // Smooth 3-second transition
+      this.startWeatherTransition(previousWeather, previousIntensity, state, intensity);
+    }
 
     // Log for debugging
-    console.log(`Weather changed: ${previousWeather} -> ${state} (intensity: ${intensity})`);
+    console.log(`Weather ${instant ? 'set' : 'transitioning'}: ${previousWeather} -> ${state} (intensity: ${intensity})`);
+  }
+
+  /**
+   * Start a smooth weather transition
+   */
+  private startWeatherTransition(
+    fromWeather: WeatherState,
+    fromIntensity: number,
+    toWeather: WeatherState,
+    toIntensity: number
+  ): void {
+    // Setup transition state
+    this.transition = {
+      fromWeather,
+      toWeather,
+      fromIntensity,
+      toIntensity,
+      progress: 0,
+      active: true
+    };
+
+    // Prepare particle emitters for new weather (but don't fully activate yet)
+    this.prepareParticleEmittersForTransition(toWeather);
+
+    // Create smooth transition tween
+    this.transitionTween = this.scene.tweens.add({
+      targets: this.transition,
+      progress: 1,
+      duration: 3000, // 3 second transition
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        this.updateWeatherTransition();
+      },
+      onComplete: () => {
+        // Finalize the transition
+        this.currentWeather = toWeather;
+        this.weatherIntensity = toIntensity;
+        this.transition.active = false;
+        this.updateParticleEmitters();
+        this.emitWeatherChange(fromWeather, toWeather, toIntensity);
+      }
+    });
+  }
+
+  /**
+   * Update visual effects during transition
+   */
+  private updateWeatherTransition(): void {
+    if (!this.transition.active) return;
+
+    const t = this.transition.progress;
+
+    // Interpolate intensity
+    this.weatherIntensity = Phaser.Math.Linear(
+      this.transition.fromIntensity,
+      this.transition.toIntensity,
+      t
+    );
+
+    // Update particle alpha based on transition
+    if (this.rainEmitter) {
+      const isRainFrom = this.transition.fromWeather === 'rain' || this.transition.fromWeather === 'heavyRain';
+      const isRainTo = this.transition.toWeather === 'rain' || this.transition.toWeather === 'heavyRain';
+
+      if (isRainFrom && !isRainTo) {
+        // Fading out rain
+        this.rainEmitter.setParticleAlpha({ start: 0.6 * (1 - t), end: 0.2 * (1 - t) });
+      } else if (!isRainFrom && isRainTo) {
+        // Fading in rain
+        this.rainEmitter.setParticleAlpha({ start: 0.6 * t, end: 0.2 * t });
+      }
+    }
+
+    // Cross-fade weather overlays
+    this.updateWeatherEffectsForTransition(t);
+  }
+
+  /**
+   * Update visual overlays during transition
+   */
+  private updateWeatherEffectsForTransition(t: number): void {
+    if (!this.weatherOverlay) return;
+
+    this.weatherOverlay.clear();
+
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    // Get overlay configs for both states
+    const fromOverlay = this.getOverlayConfig(this.transition.fromWeather, this.transition.fromIntensity);
+    const toOverlay = this.getOverlayConfig(this.transition.toWeather, this.transition.toIntensity);
+
+    // Blend the two overlays
+    const blendedColor = this.lerpColor(fromOverlay.color, toOverlay.color, t);
+    const blendedAlpha = Phaser.Math.Linear(fromOverlay.alpha, toOverlay.alpha, t);
+
+    if (blendedAlpha > 0) {
+      this.weatherOverlay.fillStyle(blendedColor, blendedAlpha);
+      this.weatherOverlay.fillRect(0, 0, width, height);
+    }
+  }
+
+  /**
+   * Get overlay configuration for a weather state
+   */
+  private getOverlayConfig(weather: WeatherState, intensity: number): { color: number; alpha: number } {
+    switch (weather) {
+      case 'overcast':
+        return { color: 0x8888aa, alpha: 0.08 };
+      case 'rain':
+        return { color: 0x667788, alpha: 0.1 };
+      case 'heavyRain':
+        return { color: 0x556677, alpha: 0.15 + intensity * 0.1 };
+      case 'fog':
+        return { color: 0xdddddd, alpha: 0.15 + intensity * 0.15 };
+      case 'heatHaze':
+        return { color: 0xffeecc, alpha: 0.05 };
+      case 'clear':
+      default:
+        return { color: 0x000000, alpha: 0 };
+    }
+  }
+
+  /**
+   * Lerp between two colors
+   */
+  private lerpColor(color1: number, color2: number, t: number): number {
+    const r1 = (color1 >> 16) & 0xff;
+    const g1 = (color1 >> 8) & 0xff;
+    const b1 = color1 & 0xff;
+
+    const r2 = (color2 >> 16) & 0xff;
+    const g2 = (color2 >> 8) & 0xff;
+    const b2 = color2 & 0xff;
+
+    const r = Math.round(Phaser.Math.Linear(r1, r2, t));
+    const g = Math.round(Phaser.Math.Linear(g1, g2, t));
+    const b = Math.round(Phaser.Math.Linear(b1, b2, t));
+
+    return (r << 16) | (g << 8) | b;
+  }
+
+  /**
+   * Prepare particle emitters for incoming weather
+   */
+  private prepareParticleEmittersForTransition(targetWeather: WeatherState): void {
+    const config = this.weatherConfigs[targetWeather];
+
+    // Start rain emitter with 0 alpha if transitioning to rain
+    if (targetWeather === 'rain' || targetWeather === 'heavyRain') {
+      if (this.rainEmitter === null) {
+        this.createRainEffect(config.particleCount || 100);
+      }
+      // Set initial alpha to 0 for fade-in after creation
+      if (this.rainEmitter !== null) {
+        this.rainEmitter.setParticleAlpha({ start: 0, end: 0 });
+      }
+    }
+  }
+
+  /**
+   * Emit weather change event
+   */
+  private emitWeatherChange(previous: WeatherState, current: WeatherState, intensity: number): void {
+    this.scene.events.emit('weatherChange', {
+      previous,
+      current,
+      intensity,
+      season: this.currentSeason,
+    });
   }
 
   private updateParticleEmitters(): void {
@@ -394,8 +763,76 @@ export class WeatherSystem {
     return descriptions[this.currentWeather];
   }
 
+  /**
+   * Get current ground wetness (0-1)
+   */
+  public getGroundWetness(): number {
+    return this.groundWetness;
+  }
+
+  /**
+   * Check if currently transitioning between weather states
+   */
+  public isTransitioning(): boolean {
+    return this.transition.active;
+  }
+
+  /**
+   * Force instant weather change (for loading saves)
+   */
+  public setWeatherInstant(state: WeatherState, intensity: number = 0.5): void {
+    this.setWeather(state, intensity, 4, true);
+  }
+
+  /**
+   * Get save data
+   */
+  public getSaveData(): object {
+    return {
+      currentWeather: this.currentWeather,
+      currentSeason: this.currentSeason,
+      weatherIntensity: this.weatherIntensity,
+      weatherDuration: this.weatherDuration,
+      elapsedWeatherTime: this.elapsedWeatherTime,
+      groundWetness: this.groundWetness,
+      windData: this.windSystem?.getSaveData()
+    };
+  }
+
+  /**
+   * Load save data
+   */
+  public loadSaveData(data: {
+    currentWeather: WeatherState;
+    currentSeason: Season;
+    weatherIntensity: number;
+    weatherDuration: number;
+    elapsedWeatherTime: number;
+    groundWetness: number;
+    windData?: object;
+  }): void {
+    this.currentSeason = data.currentSeason;
+    this.weatherDuration = data.weatherDuration;
+    this.elapsedWeatherTime = data.elapsedWeatherTime;
+    this.groundWetness = data.groundWetness;
+
+    // Set weather instantly (no transition when loading)
+    this.setWeatherInstant(data.currentWeather, data.weatherIntensity);
+
+    // Load wind data if present
+    if (data.windData && this.windSystem) {
+      this.windSystem.loadSaveData(data.windData as { currentSeason: WindSeason; currentWind: { direction: number; speed: number; gustiness: number }; noiseTime: number });
+    }
+  }
+
   // Cleanup
   public destroy(): void {
+    if (this.transitionTween) {
+      this.transitionTween.stop();
+    }
+    if (this.windSystem) {
+      this.windSystem.destroy();
+    }
     if (this.rainEmitter) {
       this.rainEmitter.destroy();
     }
@@ -404,6 +841,9 @@ export class WeatherSystem {
     }
     if (this.weatherOverlay) {
       this.weatherOverlay.destroy();
+    }
+    if (this.lightningOverlay) {
+      this.lightningOverlay.destroy();
     }
     if (this.fogOverlay) {
       this.fogOverlay.destroy();

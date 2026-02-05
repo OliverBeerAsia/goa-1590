@@ -56,6 +56,26 @@ export class DialogueSystem {
     'npc_porter': 'dock_porter',
   };
 
+  // Time-based greetings
+  private readonly timeGreetings: { [period: string]: string[] } = {
+    'Early Morning': ['You are up early!', 'The day has just begun.', 'Dawn breaks over Goa.'],
+    'Market Hours': ['Good morning!', 'A fine morning for trade!', 'The market is bustling!'],
+    'Morning': ['Good day!', 'How goes your morning?', 'Business is good today.'],
+    'Afternoon': ['The afternoon heat is fierce.', 'Rest well during siesta.', 'Too hot to work...'],
+    'Evening': ['Good evening!', 'The evening brings relief.', 'Trade resumes as it cools.'],
+    'Night': ['Late night dealings?', 'The market is closed.', 'Be careful at night.'],
+  };
+
+  // Reputation-based greetings
+  private readonly reputationGreetings: { [level: string]: string[] } = {
+    'hostile': ['What do YOU want?', 'I have nothing for the likes of you.', '*scowls*'],
+    'unfriendly': ['Hmph. State your business.', 'Make it quick.', 'I am busy.'],
+    'neutral': ['Yes?', 'How may I help you?', 'Welcome, stranger.'],
+    'friendly': ['Ah, good to see you!', 'Welcome, friend!', 'A pleasure as always.'],
+    'honored': ['My honored friend!', 'Your reputation precedes you!', 'An honor to serve you.'],
+    'trusted': ['My dear friend!', 'For you, anything!', 'Welcome, welcome!'],
+  };
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.initializeDialogueTrees();
@@ -419,7 +439,7 @@ export class DialogueSystem {
     this.dialogueTrees.set(id, tree);
   }
 
-  public startDialogue(npcType: string, _npcName: string): void {
+  public startDialogue(npcType: string, npcName: string, npcId?: string): void {
     const treeId = this.npcDialogues[npcType];
     if (!treeId) {
       console.warn(`No dialogue tree for NPC type: ${npcType}`);
@@ -433,11 +453,138 @@ export class DialogueSystem {
     }
 
     this.currentTree = tree;
-    this.currentNode = tree.nodes.get(tree.startNode) || null;
+
+    // Get context for conditional dialogue
+    const context = this.getDialogueContext(npcId);
+
+    // Modify start node text based on context
+    const startNode = tree.nodes.get(tree.startNode);
+    if (startNode) {
+      const modifiedNode = this.applyConditionalDialogue(startNode, context, npcName);
+      this.currentNode = modifiedNode;
+    } else {
+      this.currentNode = null;
+    }
+
     this.isActive = true;
 
     this.showDialogueUI();
     this.displayCurrentNode();
+  }
+
+  /**
+   * Get context for conditional dialogue
+   */
+  private getDialogueContext(npcId?: string): {
+    timeOfDay: string;
+    reputation: string;
+    attitude: string;
+    interactionCount: number;
+    tradeCount: number;
+  } {
+    let timeOfDay = 'Morning';
+    let reputation = 'neutral';
+    let attitude = 'neutral';
+    let interactionCount = 0;
+    let tradeCount = 0;
+
+    // Get time of day
+    try {
+      const marketScene = this.scene.scene.get('MarketScene') as any;
+      if (marketScene?.getTimeSystem) {
+        timeOfDay = marketScene.getTimeSystem().getCurrentPeriod();
+      }
+    } catch (e) {
+      // Use default
+    }
+
+    // Get NPC memory if available
+    const npcMemory = this.scene.registry.get('npcMemorySystem');
+    if (npcMemory && npcId) {
+      attitude = npcMemory.getAttitudeLevelForNPC?.(npcId) || 'neutral';
+      interactionCount = npcMemory.getInteractionCount?.(npcId) || 0;
+      const history = npcMemory.getTradeHistory?.(npcId);
+      tradeCount = history?.total || 0;
+    }
+
+    // Get faction reputation for NPC's faction
+    const factionSystem = this.scene.registry.get('factionSystem');
+    if (factionSystem && npcId) {
+      const npcFaction = factionSystem.getNPCFaction?.(npcId);
+      if (npcFaction) {
+        reputation = factionSystem.getReputationLevel?.(npcFaction) || 'neutral';
+      }
+    }
+
+    return { timeOfDay, reputation, attitude, interactionCount, tradeCount };
+  }
+
+  /**
+   * Apply conditional modifications to dialogue based on context
+   */
+  private applyConditionalDialogue(
+    node: DialogueNode,
+    context: {
+      timeOfDay: string;
+      reputation: string;
+      attitude: string;
+      interactionCount: number;
+      tradeCount: number;
+    },
+    npcName: string
+  ): DialogueNode {
+    // Clone the node to avoid modifying the original
+    const modifiedNode: DialogueNode = { ...node };
+
+    // Build greeting based on context
+    let greeting = '';
+
+    // Add time-based greeting
+    const timeGreetings = this.timeGreetings[context.timeOfDay];
+    if (timeGreetings) {
+      greeting = timeGreetings[Math.floor(Math.random() * timeGreetings.length)] + ' ';
+    }
+
+    // Add reputation-based greeting based on NPC attitude or faction reputation
+    const repLevel = context.attitude !== 'neutral' ? context.attitude : context.reputation;
+    const repGreetings = this.reputationGreetings[repLevel];
+    if (repGreetings && context.interactionCount > 0) {
+      // Only use reputation greetings for returning visitors
+      greeting = repGreetings[Math.floor(Math.random() * repGreetings.length)] + ' ';
+    }
+
+    // Add returning customer recognition
+    if (context.interactionCount > 5 && context.attitude !== 'hostile' && context.attitude !== 'unfriendly') {
+      const returningLines = [
+        `Ah, I remember you! `,
+        `Back again, I see. `,
+        `Welcome back! `,
+        `Good to see you again! `,
+      ];
+      greeting += returningLines[Math.floor(Math.random() * returningLines.length)];
+    }
+
+    // Add trade count recognition
+    if (context.tradeCount >= 10 && context.attitude !== 'hostile') {
+      const tradeLines = [
+        `You've been a good customer. `,
+        `Our dealings have been profitable. `,
+        `I value our trade relationship. `,
+      ];
+      greeting += tradeLines[Math.floor(Math.random() * tradeLines.length)];
+    }
+
+    // Modify the node text
+    if (greeting) {
+      modifiedNode.text = greeting + modifiedNode.text;
+    }
+
+    // Modify speaker to include actual NPC name if different
+    if (npcName && modifiedNode.speaker !== 'System') {
+      modifiedNode.speaker = npcName;
+    }
+
+    return modifiedNode;
   }
 
   private showDialogueUI(): void {
@@ -445,23 +592,57 @@ export class DialogueSystem {
       this.dialogueContainer.destroy();
     }
 
-    const width = this.scene.cameras.main.width;
-    const height = this.scene.cameras.main.height;
+    const camera = this.scene.cameras.main;
+    const zoom = camera.zoom || 1;
 
-    this.dialogueContainer = this.scene.add.container(0, height - 200);
+    // Calculate visible world width
+    const viewWidth = camera.width / zoom;
+
+    // Box dimensions in world units
+    const boxWidth = viewWidth - 50;
+    const boxHeight = 90;
+    const boxX = 25; // Margin from left edge
+
+    // Create container - will be positioned relative to camera view
+    this.dialogueContainer = this.scene.add.container(0, 0);
     this.dialogueContainer.setDepth(10000);
-    this.dialogueContainer.setScrollFactor(0);
 
     // Background
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x2c1810, 0.95);
-    bg.fillRect(50, 0, width - 100, 180);
+    bg.fillRect(boxX, 0, boxWidth, boxHeight);
     bg.lineStyle(2, 0x8b4513, 1);
-    bg.strokeRect(50, 0, width - 100, 180);
+    bg.strokeRect(boxX, 0, boxWidth, boxHeight);
     this.dialogueContainer.add(bg);
+
+    // Store dimensions for text positioning
+    this.dialogueContainer.setData('boxX', boxX);
+    this.dialogueContainer.setData('boxWidth', boxWidth);
+    this.dialogueContainer.setData('boxHeight', boxHeight);
+
+    // Position the container at bottom of visible area
+    this.updateDialoguePosition();
+
+    // Update position each frame while dialogue is open
+    this.scene.events.on('update', this.updateDialoguePosition, this);
 
     // Add ESC key handler to close dialogue
     this.scene.input.keyboard?.on('keydown-ESC', this.handleEscKey, this);
+  }
+
+  private updateDialoguePosition(): void {
+    if (!this.dialogueContainer || !this.isActive) return;
+
+    const camera = this.scene.cameras.main;
+    const zoom = camera.zoom || 1;
+    const viewHeight = camera.height / zoom;
+    const boxHeight = this.dialogueContainer.getData('boxHeight') || 90;
+
+    // Position at bottom of visible camera area
+    this.dialogueContainer.setPosition(
+      camera.scrollX,
+      camera.scrollY + viewHeight - boxHeight - 10
+    );
   }
 
   private handleEscKey(): void {
@@ -479,23 +660,24 @@ export class DialogueSystem {
       children[i].destroy();
     }
 
-    const width = this.scene.cameras.main.width;
+    const boxX = this.dialogueContainer.getData('boxX') || 25;
+    const boxWidth = this.dialogueContainer.getData('boxWidth') || 300;
 
-    // Speaker name
-    const speakerText = this.scene.add.text(70, 10, this.currentNode.speaker, {
+    // Speaker name (smaller font for world-space text)
+    const speakerText = this.scene.add.text(boxX + 10, 5, this.currentNode.speaker, {
       fontFamily: 'Georgia, serif',
-      fontSize: '16px',
+      fontSize: '8px',
       color: '#FFD700',
       fontStyle: 'bold',
     });
     this.dialogueContainer.add(speakerText);
 
     // Dialogue text
-    const dialogueText = this.scene.add.text(70, 35, this.currentNode.text, {
+    const dialogueText = this.scene.add.text(boxX + 10, 18, this.currentNode.text, {
       fontFamily: 'Georgia, serif',
-      fontSize: '14px',
+      fontSize: '7px',
       color: '#F5E6D3',
-      wordWrap: { width: width - 160 },
+      wordWrap: { width: boxWidth - 20 },
     });
     this.dialogueContainer.add(dialogueText);
 
@@ -512,19 +694,20 @@ export class DialogueSystem {
   private displayResponses(responses: DialogueResponse[]): void {
     if (!this.dialogueContainer) return;
 
-    let yOffset = 100;
+    const boxX = this.dialogueContainer.getData('boxX') || 25;
+    let yOffset = 50;
 
     responses.forEach((response, index) => {
       // Check condition if present
       if (response.condition && !response.condition()) return;
 
       const responseText = this.scene.add.text(
-        90,
+        boxX + 20,
         yOffset,
         `${index + 1}. ${response.text}`,
         {
           fontFamily: 'Georgia, serif',
-          fontSize: '13px',
+          fontSize: '6px',
           color: '#C19A6B',
         }
       );
@@ -548,16 +731,18 @@ export class DialogueSystem {
       });
 
       this.dialogueContainer!.add(responseText);
-      yOffset += 20;
+      yOffset += 10;
     });
   }
 
   private displayContinuePrompt(nextNodeId: string): void {
     if (!this.dialogueContainer) return;
 
-    const continueText = this.scene.add.text(90, 140, '[Press SPACE to continue]', {
+    const boxX = this.dialogueContainer.getData('boxX') || 25;
+
+    const continueText = this.scene.add.text(boxX + 20, 70, '[Press SPACE to continue]', {
       fontFamily: 'Georgia, serif',
-      fontSize: '12px',
+      fontSize: '5px',
       color: '#888888',
       fontStyle: 'italic',
     });
@@ -571,9 +756,11 @@ export class DialogueSystem {
   private displayEndPrompt(): void {
     if (!this.dialogueContainer) return;
 
-    const endText = this.scene.add.text(90, 140, '[Press SPACE to close]', {
+    const boxX = this.dialogueContainer.getData('boxX') || 25;
+
+    const endText = this.scene.add.text(boxX + 20, 70, '[Press SPACE to close]', {
       fontFamily: 'Georgia, serif',
-      fontSize: '12px',
+      fontSize: '5px',
       color: '#888888',
       fontStyle: 'italic',
     });
@@ -678,6 +865,9 @@ export class DialogueSystem {
 
     // Remove ESC key handler
     this.scene.input.keyboard?.off('keydown-ESC', this.handleEscKey, this);
+
+    // Remove update listener
+    this.scene.events.off('update', this.updateDialoguePosition, this);
 
     if (this.dialogueContainer) {
       this.dialogueContainer.destroy();

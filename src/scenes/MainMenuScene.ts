@@ -207,10 +207,24 @@ export class MainMenuScene extends Phaser.Scene {
       this.menuContainer.add(text);
 
       if (isEnabled) {
+        // Create an invisible interactive zone covering the whole button area
+        const hitZone = this.add.zone(0, yOffset, 200, 36).setInteractive({ useHandCursor: true });
+        hitZone.on('pointerover', () => this.highlightMenuItem(index));
+        hitZone.on('pointerout', () => this.unhighlightMenuItem(index));
+        hitZone.on('pointerdown', () => {
+          console.log('Menu clicked:', option.text);
+          option.action();
+        });
+        this.menuContainer.add(hitZone);
+
+        // Also make text interactive as backup
         text.setInteractive({ useHandCursor: true });
         text.on('pointerover', () => this.highlightMenuItem(index));
         text.on('pointerout', () => this.unhighlightMenuItem(index));
-        text.on('pointerdown', () => option.action());
+        text.on('pointerdown', () => {
+          console.log('Text clicked:', option.text);
+          option.action();
+        });
       }
 
       this.menuItems.push(text);

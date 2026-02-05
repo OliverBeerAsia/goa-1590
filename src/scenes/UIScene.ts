@@ -7,15 +7,18 @@ import Phaser from 'phaser';
 export class UIScene extends Phaser.Scene {
   private timeText!: Phaser.GameObjects.Text;
   private goldText!: Phaser.GameObjects.Text;
+  private rankText!: Phaser.GameObjects.Text;
   private inventoryPanel!: Phaser.GameObjects.Container;
   private tradePanel!: Phaser.GameObjects.Container;
   private transitionPrompt!: Phaser.GameObjects.Container;
   private questOfferPanel!: Phaser.GameObjects.Container;
   private questLogPanel!: Phaser.GameObjects.Container;
+  private contractPanel!: Phaser.GameObjects.Container;
   private isInventoryOpen = false;
   private isTradeOpen = false;
   private isQuestOfferOpen = false;
   private isQuestLogOpen = false;
+  private isContractPanelOpen = false;
   private currentQuestOffer: { npcId: string; npcName: string; quests: any[] } | null = null;
 
   constructor() {
@@ -29,6 +32,7 @@ export class UIScene extends Phaser.Scene {
     this.createTransitionPrompt();
     this.createQuestOfferPanel();
     this.createQuestLogPanel();
+    this.createContractPanel();
     this.setupEventListeners();
     this.setupInputHandlers();
 
@@ -470,9 +474,17 @@ export class UIScene extends Phaser.Scene {
     });
     locationText.setName('locationText');
 
+    // Rank display
+    this.rankText = this.add.text(60, 32, 'Peddler', {
+      fontFamily: 'Georgia, serif',
+      fontSize: '11px',
+      color: '#5a4030',
+      fontStyle: 'italic',
+    });
+
     // Gold display styled as ledger entry - larger
     // Initial value, will be synced from Player after scene is fully created
-    this.goldText = this.add.text(width - 130, 18, `Gold: 100`, {
+    this.goldText = this.add.text(width - 130, 12, `Gold: 100`, {
       fontFamily: 'Georgia, serif',
       fontSize: '18px',
       color: '#8b6914',
@@ -480,7 +492,7 @@ export class UIScene extends Phaser.Scene {
     });
 
     // Inventory button styled as ledger tab - larger
-    const invButton = this.add.text(width - 240, 18, '[I]nventory', {
+    const invButton = this.add.text(width - 240, 12, '[I]nventory', {
       fontFamily: 'Georgia, serif',
       fontSize: '14px',
       color: '#5a4020',
@@ -489,6 +501,17 @@ export class UIScene extends Phaser.Scene {
     invButton.on('pointerover', () => invButton.setColor('#8b6914'));
     invButton.on('pointerout', () => invButton.setColor('#5a4020'));
     invButton.on('pointerdown', () => this.toggleInventory());
+
+    // Contracts button
+    const contractBtn = this.add.text(width - 240, 32, '[C]ontracts', {
+      fontFamily: 'Georgia, serif',
+      fontSize: '14px',
+      color: '#5a4020',
+    });
+    contractBtn.setInteractive({ useHandCursor: true });
+    contractBtn.on('pointerover', () => contractBtn.setColor('#8b6914'));
+    contractBtn.on('pointerout', () => contractBtn.setColor('#5a4020'));
+    contractBtn.on('pointerdown', () => this.toggleContractPanel());
   }
 
   private drawCornerOrnament(graphics: Phaser.GameObjects.Graphics, x: number, y: number): void {
@@ -666,6 +689,211 @@ export class UIScene extends Phaser.Scene {
     graphics.fillRect(x, y, 2, 20);
   }
 
+  private createContractPanel(): void {
+    this.contractPanel = this.add.container(20, 70);
+    this.contractPanel.setVisible(false);
+    this.contractPanel.setDepth(1500);
+
+    // Parchment background
+    const bg = this.add.graphics();
+    bg.fillStyle(0xf4e4bc, 0.95);
+    bg.fillRoundedRect(0, 0, 350, 320, 8);
+
+    // Aged paper texture
+    bg.fillStyle(0xe8d4a8, 0.3);
+    for (let i = 0; i < 350; i += 12) {
+      if (Math.random() > 0.5) {
+        bg.fillRect(i, Math.random() * 310, 6, 2);
+      }
+    }
+
+    // Wood frame
+    bg.fillStyle(0x3d2314, 1);
+    bg.fillRect(0, 0, 350, 5);
+    bg.fillRect(0, 315, 350, 5);
+    bg.fillRect(0, 0, 5, 320);
+    bg.fillRect(345, 0, 5, 320);
+
+    // Gold accent
+    bg.fillStyle(0xc9a227, 0.8);
+    bg.fillRect(5, 5, 340, 2);
+    bg.fillRect(5, 313, 340, 2);
+    this.contractPanel.add(bg);
+
+    // Title
+    const title = this.add.text(175, 20, '- Trade Contracts -', {
+      fontFamily: 'Georgia, serif',
+      fontSize: '18px',
+      color: '#2c1810',
+      fontStyle: 'bold italic',
+    });
+    title.setOrigin(0.5, 0.5);
+    this.contractPanel.add(title);
+
+    // Press C to close hint
+    const closeHint = this.add.text(175, 300, 'Press C to close', {
+      fontFamily: 'Georgia, serif',
+      fontSize: '11px',
+      color: '#5a4030',
+      fontStyle: 'italic',
+    });
+    closeHint.setOrigin(0.5, 0.5);
+    this.contractPanel.add(closeHint);
+
+    // Decorative separator
+    const sep = this.add.graphics();
+    sep.lineStyle(2, 0x8b6914, 0.6);
+    sep.lineBetween(20, 35, 330, 35);
+    sep.fillStyle(0xc9a227, 1);
+    sep.fillCircle(175, 35, 4);
+    this.contractPanel.add(sep);
+
+    // Contract list container
+    const contractList = this.add.container(15, 50);
+    contractList.setName('contractList');
+    this.contractPanel.add(contractList);
+  }
+
+  private toggleContractPanel(): void {
+    this.isContractPanelOpen = !this.isContractPanelOpen;
+    this.contractPanel.setVisible(this.isContractPanelOpen);
+
+    if (this.isContractPanelOpen) {
+      this.updateContractPanel();
+    }
+  }
+
+  private updateContractPanel(): void {
+    const contractList = this.contractPanel.getByName('contractList') as Phaser.GameObjects.Container;
+    if (!contractList) return;
+
+    // Clear existing entries
+    contractList.removeAll(true);
+
+    const contractSystem = this.registry.get('contractSystem');
+    if (!contractSystem) {
+      const noContracts = this.add.text(0, 0, 'Contract system not available', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '12px',
+        color: '#8a7a60',
+        fontStyle: 'italic',
+      });
+      contractList.add(noContracts);
+      return;
+    }
+
+    let yOffset = 0;
+
+    // Active contracts section
+    const activeContracts = contractSystem.getActiveContracts?.() || [];
+    if (activeContracts.length > 0) {
+      const activeHeader = this.add.text(0, yOffset, 'Active Contracts:', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '14px',
+        color: '#2c1810',
+        fontStyle: 'bold',
+      });
+      contractList.add(activeHeader);
+      yOffset += 20;
+
+      for (const contract of activeContracts) {
+        // Contract name and client
+        const contractText = this.add.text(10, yOffset, `${contract.clientName}`, {
+          fontFamily: 'Georgia, serif',
+          fontSize: '11px',
+          color: '#2c1810',
+        });
+        contractList.add(contractText);
+        yOffset += 14;
+
+        // Requirement
+        const goodName = this.formatGoodName(contract.goods);
+        const reqText = this.add.text(20, yOffset, `Deliver ${contract.quantity} ${goodName}`, {
+          fontFamily: 'Georgia, serif',
+          fontSize: '10px',
+          color: '#5a4020',
+        });
+        contractList.add(reqText);
+        yOffset += 12;
+
+        // Progress
+        const progress = `Progress: ${contract.delivered}/${contract.quantity}`;
+        const timeRemaining = contractSystem.getContractTimeRemaining?.(contract.id) || 0;
+        const timeText = `Time left: ${timeRemaining}h`;
+        const statusText = this.add.text(20, yOffset, `${progress} | ${timeText}`, {
+          fontFamily: 'Georgia, serif',
+          fontSize: '9px',
+          color: timeRemaining < 6 ? '#a83000' : '#5a4020',
+        });
+        contractList.add(statusText);
+        yOffset += 16;
+      }
+    }
+
+    // Available contracts section
+    const availableContracts = contractSystem.getAvailableContracts?.() || [];
+    if (availableContracts.length > 0) {
+      yOffset += 10;
+      const availHeader = this.add.text(0, yOffset, 'Available Contracts:', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '14px',
+        color: '#2c1810',
+        fontStyle: 'bold',
+      });
+      contractList.add(availHeader);
+      yOffset += 20;
+
+      for (const contract of availableContracts) {
+        // Contract info
+        const goodName = this.formatGoodName(contract.goods);
+        const contractInfo = this.add.text(10, yOffset,
+          `${contract.clientName}: ${contract.quantity} ${goodName}`, {
+          fontFamily: 'Georgia, serif',
+          fontSize: '11px',
+          color: '#2c1810',
+        });
+        contractList.add(contractInfo);
+        yOffset += 14;
+
+        // Details
+        const details = this.add.text(20, yOffset,
+          `Reward: ${contract.reward}g | Deadline: ${contract.deadline}h`, {
+          fontFamily: 'Georgia, serif',
+          fontSize: '9px',
+          color: '#5a4020',
+        });
+        contractList.add(details);
+        yOffset += 12;
+
+        // Accept button
+        const acceptBtn = this.add.text(20, yOffset, '[Accept]', {
+          fontFamily: 'Georgia, serif',
+          fontSize: '10px',
+          color: '#2d5a27',
+        });
+        acceptBtn.setInteractive({ useHandCursor: true });
+        acceptBtn.on('pointerover', () => acceptBtn.setColor('#4a8a42'));
+        acceptBtn.on('pointerout', () => acceptBtn.setColor('#2d5a27'));
+        acceptBtn.on('pointerdown', () => {
+          contractSystem.acceptContract(contract.id);
+          this.updateContractPanel();
+        });
+        contractList.add(acceptBtn);
+        yOffset += 18;
+      }
+    }
+
+    if (activeContracts.length === 0 && availableContracts.length === 0) {
+      const noContracts = this.add.text(0, 0, 'No contracts available.\nCheck back later or increase your rank.', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '12px',
+        color: '#8a7a60',
+        fontStyle: 'italic',
+      });
+      contractList.add(noContracts);
+    }
+  }
+
   private setupEventListeners(): void {
     // Listen for time updates from MarketScene
     const marketScene = this.scene.get('MarketScene');
@@ -700,9 +928,46 @@ export class UIScene extends Phaser.Scene {
     marketScene.events.on('questOffer', (data: { npcId: string; npcName: string; quests: any[] }) => {
       this.showQuestOffer(data);
     });
-    
+
     marketScene.events.on('questStateChange', () => {
       this.updateQuestLog();
+    });
+
+    // Listen for rank changes
+    marketScene.events.on('rankUp', (data: { rankInfo: { title: string } }) => {
+      this.rankText.setText(data.rankInfo.title);
+    });
+
+    // Listen for progression updates
+    marketScene.events.on('progressionUpdate', (data: { title: string }) => {
+      if (this.rankText && data.title) {
+        this.rankText.setText(data.title);
+      }
+    });
+
+    // Listen for contract updates
+    marketScene.events.on('contractAccepted', () => {
+      if (this.isContractPanelOpen) {
+        this.updateContractPanel();
+      }
+    });
+
+    marketScene.events.on('contractCompleted', () => {
+      if (this.isContractPanelOpen) {
+        this.updateContractPanel();
+      }
+    });
+
+    marketScene.events.on('contractFailed', () => {
+      if (this.isContractPanelOpen) {
+        this.updateContractPanel();
+      }
+    });
+
+    marketScene.events.on('contractsRefreshed', () => {
+      if (this.isContractPanelOpen) {
+        this.updateContractPanel();
+      }
     });
   }
 
@@ -723,9 +988,13 @@ export class UIScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-I', () => {
       this.toggleInventory();
     });
-    
+
     this.input.keyboard?.on('keydown-J', () => {
       this.toggleQuestLog();
+    });
+
+    this.input.keyboard?.on('keydown-C', () => {
+      this.toggleContractPanel();
     });
 
     this.input.keyboard?.on('keydown-ESC', () => {
@@ -735,6 +1004,8 @@ export class UIScene extends Phaser.Scene {
         this.closeTrade();
       } else if (this.isQuestLogOpen) {
         this.toggleQuestLog();
+      } else if (this.isContractPanelOpen) {
+        this.toggleContractPanel();
       } else if (this.isInventoryOpen) {
         this.toggleInventory();
       }

@@ -10,6 +10,12 @@ import { QuestSystem } from '../systems/QuestSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { EventSystem } from '../systems/EventSystem';
 import { DialogueSystem } from '../systems/DialogueSystem';
+import { TradeSystem } from '../systems/TradeSystem';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
+import { ContractSystem } from '../systems/ContractSystem';
+import { NPCMemorySystem } from '../systems/NPCMemorySystem';
+import { TradeRouteSystem } from '../systems/TradeRouteSystem';
+import { AchievementSystem } from '../systems/AchievementSystem';
 
 // Import rich JSON quest files
 import pepperContractQuest from '../data/quests/the-pepper-contract.json';
@@ -32,12 +38,19 @@ export class MarketScene extends Phaser.Scene {
   private saveSystem!: SaveSystem;
   private eventSystem!: EventSystem;
   private dialogueSystem!: DialogueSystem;
+  private tradeSystem!: TradeSystem;
+  private progressionSystem!: ProgressionSystem;
+  private contractSystem!: ContractSystem;
+  private npcMemorySystem!: NPCMemorySystem;
+  private tradeRouteSystem!: TradeRouteSystem;
+  private achievementSystem!: AchievementSystem;
   private mapWidth = 40;
   private mapHeight = 30;
   private tileWidth = 64;  // 2x scale for Ultima 8 style
   private tileHeight = 32;
   private transitionZones: { x: number; y: number; targetLocation: string; label: string }[] = [];
   private waterTiles: Phaser.GameObjects.Sprite[] = [];
+  private isTransitioning = false; // Guard against double transitions
 
   constructor() {
     super({ key: 'MarketScene' });
@@ -57,6 +70,14 @@ export class MarketScene extends Phaser.Scene {
     this.eventSystem = new EventSystem(this);
     this.eventSystem.setWeatherSystem(this.weatherSystem);
     this.dialogueSystem = new DialogueSystem(this);
+
+    // Initialize new trading and progression systems
+    this.tradeSystem = new TradeSystem(this);
+    this.progressionSystem = new ProgressionSystem(this);
+    this.contractSystem = new ContractSystem(this);
+    this.npcMemorySystem = new NPCMemorySystem(this);
+    this.tradeRouteSystem = new TradeRouteSystem(this);
+    this.achievementSystem = new AchievementSystem(this);
     console.log('MarketScene: systems initialized');
 
     // Create water animation
@@ -105,6 +126,13 @@ export class MarketScene extends Phaser.Scene {
     this.registry.set('saveSystem', this.saveSystem);
     this.registry.set('eventSystem', this.eventSystem);
     this.registry.set('dialogueSystem', this.dialogueSystem);
+    this.registry.set('tradeSystem', this.tradeSystem);
+    this.registry.set('progressionSystem', this.progressionSystem);
+    this.registry.set('contractSystem', this.contractSystem);
+    this.registry.set('npcMemorySystem', this.npcMemorySystem);
+    this.registry.set('tradeRouteSystem', this.tradeRouteSystem);
+    this.registry.set('achievementSystem', this.achievementSystem);
+    this.registry.set('currentLocation', 'ribeira_grande');
 
     // Check if we should load a saved game (set by MainMenuScene continue)
     if (this.registry.get('loadSaveOnStart')) {
@@ -158,6 +186,36 @@ export class MarketScene extends Phaser.Scene {
     // Apply world location
     if (saveData.world?.currentLocation && saveData.world.currentLocation !== 'ribeira_grande') {
       this.handleLocationChange(saveData.world.currentLocation);
+    }
+
+    // Apply progression data
+    if (saveData.progression) {
+      this.progressionSystem.loadSaveData(saveData.progression);
+    }
+
+    // Apply contract data
+    if (saveData.contracts) {
+      this.contractSystem.loadSaveData(saveData.contracts);
+    }
+
+    // Apply NPC memory data
+    if (saveData.npcMemories) {
+      this.npcMemorySystem.loadSaveData(saveData.npcMemories);
+    }
+
+    // Apply trade route data
+    if (saveData.tradeRoutes) {
+      this.tradeRouteSystem.loadSaveData(saveData.tradeRoutes);
+    }
+
+    // Apply achievement data
+    if (saveData.achievements) {
+      this.achievementSystem.loadSaveData(saveData.achievements);
+    }
+
+    // Apply player skills
+    if (saveData.player?.skills) {
+      this.player.setSkills(saveData.player.skills);
     }
 
     console.log('MarketScene: Save data applied');
@@ -718,14 +776,51 @@ export class MarketScene extends Phaser.Scene {
         data: {
           gold: this.player.getGold(),
           inventory: this.player.getInventory(),
+          skills: this.player.getSkills(),
           position: { x: this.player.x, y: this.player.y },
           location: this.worldSystem.getCurrentLocation?.() || 'ribeira_grande',
         },
+      });
+
+      // Emit progression system save data
+      this.events.emit('saveDataResponse', {
+        system: 'progression',
+        data: this.progressionSystem.getSaveData(),
+      });
+
+      // Emit contract system save data
+      this.events.emit('saveDataResponse', {
+        system: 'contracts',
+        data: this.contractSystem.getSaveData(),
+      });
+
+      // Emit NPC memory save data
+      this.events.emit('saveDataResponse', {
+        system: 'npcMemories',
+        data: this.npcMemorySystem.getSaveData(),
+      });
+
+      // Emit trade route save data
+      this.events.emit('saveDataResponse', {
+        system: 'tradeRoutes',
+        data: this.tradeRouteSystem.getSaveData(),
+      });
+
+      // Emit achievement save data
+      this.events.emit('saveDataResponse', {
+        system: 'achievements',
+        data: this.achievementSystem.getSaveData(),
       });
     });
   }
 
   private handleLocationChange(targetLocation: string): void {
+    // Guard against double transitions
+    if (this.isTransitioning) {
+      console.warn('Location transition already in progress');
+      return;
+    }
+
     // Check if location exists
     const location = this.worldSystem.getLocation(targetLocation);
     if (!location) {
@@ -733,24 +828,37 @@ export class MarketScene extends Phaser.Scene {
       return;
     }
 
+    // Set transition guard
+    this.isTransitioning = true;
+    this.input.enabled = false; // Disable input during transition
+
     // Fade out effect
     this.cameras.main.fadeOut(500, 0, 0, 0);
-    
+
     this.cameras.main.once('camerafadeoutcomplete', () => {
       // Change location in world system
       this.worldSystem.setCurrentLocation(targetLocation);
-      
+
+      // Store current location in registry for NPC schedule checks
+      this.registry.set('currentLocation', targetLocation);
+
       // Update atmosphere for new location
       this.atmosphereSystem.setLocation(targetLocation, this.isInteriorLocation(targetLocation));
-      
+
       // Regenerate map for the new location
       this.regenerateForLocation(targetLocation);
-      
+
       // Fade back in
       this.cameras.main.fadeIn(500, 0, 0, 0);
-      
+
       // Show location name
       this.showLocationNotification(this.getLocationDisplayName(targetLocation));
+
+      // Clear transition guard after fade completes
+      this.cameras.main.once('camerafadeincomplete', () => {
+        this.isTransitioning = false;
+        this.input.enabled = true;
+      });
     });
   }
   
@@ -768,7 +876,12 @@ export class MarketScene extends Phaser.Scene {
   }
   
   private regenerateForLocation(locationId: string): void {
-    // Clear water tiles array (they'll be destroyed with other children)
+    // Properly clean up water tiles to prevent memory leaks
+    for (const tile of this.waterTiles) {
+      if (tile && tile.active) {
+        tile.destroy();
+      }
+    }
     this.waterTiles = [];
 
     // Clear existing map tiles (but keep player and core systems)
@@ -1161,6 +1274,7 @@ export class MarketScene extends Phaser.Scene {
     this.weatherSystem.update(delta);
     this.atmosphereSystem.update(delta);
     this.eventSystem.update(delta);
+    this.tradeSystem.update(time);
 
     // Render dynamic shadows for entities
     const entities = [
@@ -1207,5 +1321,55 @@ export class MarketScene extends Phaser.Scene {
 
   public getPlayer(): Player {
     return this.player;
+  }
+
+  /**
+   * Clean up resources when scene is shut down
+   */
+  shutdown(): void {
+    // Clean up water tiles
+    for (const tile of this.waterTiles) {
+      if (tile && tile.active) {
+        tile.destroy();
+      }
+    }
+    this.waterTiles = [];
+
+    // Clean up NPCs
+    for (const npc of this.npcs) {
+      if (npc && npc.active) {
+        npc.destroy();
+      }
+    }
+    this.npcs = [];
+
+    // Unsubscribe from events to prevent memory leaks
+    this.events.off('requestLocationChange');
+    this.events.off('ship_arrival');
+    this.events.off('cargo_unloaded');
+    this.events.off('reputationChange');
+    this.events.off('goldChange');
+    this.events.off('itemGained');
+    this.events.off('itemLost');
+    this.events.off('questStarted');
+    this.events.off('questStageAdvanced');
+    this.events.off('questCompleted');
+    this.events.off('requestSaveData');
+
+    // Clear registry references
+    this.registry.remove('worldSystem');
+    this.registry.remove('factionSystem');
+    this.registry.remove('questSystem');
+    this.registry.remove('saveSystem');
+    this.registry.remove('eventSystem');
+    this.registry.remove('dialogueSystem');
+    this.registry.remove('tradeSystem');
+    this.registry.remove('progressionSystem');
+    this.registry.remove('contractSystem');
+    this.registry.remove('npcMemorySystem');
+    this.registry.remove('tradeRouteSystem');
+    this.registry.remove('achievementSystem');
+    this.registry.remove('nearTransition');
+    this.registry.remove('currentLocation');
   }
 }
