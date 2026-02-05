@@ -314,64 +314,82 @@ export class BootScene extends Phaser.Scene {
   }
 
   async create(): Promise<void> {
-    // Generate assets using the new procedural art pipeline
-    await this.generateAllAssets();
+    try {
+      // Generate assets using the new procedural art pipeline
+      await this.generateAllAssets();
 
-    // Initialize audio system and generate placeholder sounds
-    this.audioSystem = new AudioSystem(this);
-    this.audioSystem.generatePlaceholderAudio();
+      // Initialize audio system and generate placeholder sounds
+      this.audioSystem = new AudioSystem(this);
+      this.audioSystem.generatePlaceholderAudio();
 
-    // Store audio system in registry for other scenes to access
-    this.registry.set('audioSystem', this.audioSystem);
+      // Store audio system in registry for other scenes to access
+      this.registry.set('audioSystem', this.audioSystem);
 
-    // Brief delay to show completed loading screen
-    await new Promise(resolve => setTimeout(resolve, 500));
+      // Brief delay to show completed loading screen
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Transition to the main game scene directly
-    this.scene.start('MarketScene');
-    this.scene.launch('UIScene');
+      // Transition to the main menu
+      this.scene.start('MainMenuScene');
+    } catch (error) {
+      console.error('BootScene: Asset generation failed:', error);
+      // Show error on screen
+      this.statusText.setText('Error loading game. Check console.');
+      this.statusText.setColor('#ff0000');
+    }
   }
 
   private async generateAllAssets(): Promise<void> {
     let stageIndex = 0;
 
-    // Stage 1: Core palette/utilities
-    this.updateProgress(0, LOADING_STAGES[stageIndex].message);
-    await this.delay(100);
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
-    stageIndex++;
+    try {
+      // Stage 1: Core palette/utilities
+      console.log('BootScene: Stage 1 - Preparing palette...');
+      this.updateProgress(0, LOADING_STAGES[stageIndex].message);
+      await this.delay(100);
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      stageIndex++;
 
-    // Stage 2: Generate tiles
-    this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
-    await this.generateTiles();
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
-    stageIndex++;
+      // Stage 2: Generate tiles
+      console.log('BootScene: Stage 2 - Generating tiles...');
+      this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
+      await this.generateTiles();
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      stageIndex++;
 
-    // Stage 3: Generate characters
-    this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
-    await this.generateCharacters();
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
-    stageIndex++;
+      // Stage 3: Generate characters
+      console.log('BootScene: Stage 3 - Generating characters...');
+      this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
+      await this.generateCharacters();
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      stageIndex++;
 
-    // Stage 4: Generate buildings
-    this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
-    await this.generateBuildings();
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
-    stageIndex++;
+      // Stage 4: Generate buildings
+      console.log('BootScene: Stage 4 - Generating buildings...');
+      this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
+      await this.generateBuildings();
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      stageIndex++;
 
-    // Stage 5: Generate UI elements
-    this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
-    await this.generateUIElements();
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
-    stageIndex++;
+      // Stage 5: Generate UI elements
+      console.log('BootScene: Stage 5 - Generating UI...');
+      this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
+      await this.generateUIElements();
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      stageIndex++;
 
-    // Stage 6: Generate effects and legacy compatibility textures
-    this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
-    await this.generateEffectsAndLegacy();
-    this.completedWeight += LOADING_STAGES[stageIndex].weight;
+      // Stage 6: Generate effects and legacy compatibility textures
+      console.log('BootScene: Stage 6 - Generating effects...');
+      this.updateProgress(this.completedWeight / this.totalWeight, LOADING_STAGES[stageIndex].message);
+      await this.generateEffectsAndLegacy();
+      this.completedWeight += LOADING_STAGES[stageIndex].weight;
 
-    // Final progress update
-    this.updateProgress(1, 'Ready to trade...');
+      // Final progress update
+      console.log('BootScene: Asset generation complete!');
+      this.updateProgress(1, 'Ready to trade...');
+    } catch (error) {
+      console.error(`BootScene: Failed at stage ${stageIndex + 1} (${LOADING_STAGES[stageIndex]?.message}):`, error);
+      throw error;
+    }
   }
 
   private async generateTiles(): Promise<void> {
