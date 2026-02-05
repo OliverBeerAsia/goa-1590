@@ -592,38 +592,43 @@ export class DialogueSystem {
       this.dialogueContainer.destroy();
     }
 
-    const camera = this.scene.cameras.main;
-    const zoom = camera.zoom || 1;
+    // Use screen dimensions directly - dialogue is a UI element
+    const screenWidth = this.scene.scale.width;
+    const screenHeight = this.scene.scale.height;
 
-    // With setScrollFactor(0), coordinates need to be in "world units" that get displayed
-    // at screen position after zoom is applied. So we divide screen dimensions by zoom.
-    const viewWidth = this.scene.scale.width / zoom;
-    const viewHeight = this.scene.scale.height / zoom;
+    // Account for UIScene bottomBar (52px) plus margin
+    const uiBottomBarHeight = 60;
 
-    // Account for UIScene bottomBar (52px) plus some margin
-    const uiBottomBarHeight = 60 / zoom;
-
-    // Box dimensions (in world units) - increased height for better readability
-    const margin = 30 / zoom;
-    const boxWidth = viewWidth - (margin * 2);
-    const boxHeight = 140 / zoom;
+    // Box dimensions in screen pixels
+    const margin = 20;
+    const boxWidth = screenWidth - (margin * 2);
+    const boxHeight = 120;
     const boxX = margin;
-    const boxY = viewHeight - boxHeight - uiBottomBarHeight;
+    const boxY = screenHeight - boxHeight - uiBottomBarHeight;
 
-    // Create container with scrollFactor(0) to lock to screen
-    this.dialogueContainer = this.scene.add.container(boxX, boxY);
+    // Create container - use a dedicated UI camera approach
+    // Position at screen coordinates
+    this.dialogueContainer = this.scene.add.container(0, 0);
     this.dialogueContainer.setDepth(10000);
-    this.dialogueContainer.setScrollFactor(0);
 
-    // Background - use Rectangle for reliable rendering with scrollFactor(0)
-    const bgRect = this.scene.add.rectangle(boxWidth / 2, boxHeight / 2, boxWidth, boxHeight, 0x2c1810, 0.95);
-    bgRect.setStrokeStyle(2 / zoom, 0x8b4513, 1);
+    // Background rectangle positioned at screen coordinates
+    const bgRect = this.scene.add.rectangle(
+      boxX + boxWidth / 2,
+      boxY + boxHeight / 2,
+      boxWidth,
+      boxHeight,
+      0x2c1810,
+      0.95
+    );
+    bgRect.setStrokeStyle(2, 0x8b4513, 1);
+    bgRect.setScrollFactor(0);
     this.dialogueContainer.add(bgRect);
 
-    // Store dimensions for text positioning
+    // Store dimensions and offset for text positioning
     this.dialogueContainer.setData('boxWidth', boxWidth);
     this.dialogueContainer.setData('boxHeight', boxHeight);
-    this.dialogueContainer.setData('zoom', zoom);
+    this.dialogueContainer.setData('boxX', boxX);
+    this.dialogueContainer.setData('boxY', boxY);
 
     // Add ESC key handler to close dialogue
     this.scene.input.keyboard?.on('keydown-ESC', this.handleEscKey, this);
@@ -645,37 +650,52 @@ export class DialogueSystem {
     }
 
     const boxWidth = this.dialogueContainer.getData('boxWidth') || 300;
-    const zoom = this.dialogueContainer.getData('zoom') || 1;
+    const boxX = this.dialogueContainer.getData('boxX') || 20;
+    const boxY = this.dialogueContainer.getData('boxY') || 400;
 
-    // Scale font sizes and positions for zoom - increased for better readability
-    const speakerSize = Math.round(14 / zoom);
-    const textSize = Math.round(12 / zoom);
-    const padding = 12 / zoom;
-    const lineSpacing = 6 / zoom;
+    // Fixed font sizes in screen pixels
+    const speakerSize = 16;
+    const textSize = 14;
+    const padding = 12;
+    const lineSpacing = 6;
 
-    // Speaker name highlight bar - use Rectangle for reliable rendering
-    const speakerBgHeight = speakerSize + 6 / zoom;
-    const speakerBgY = padding - 2 / zoom + speakerBgHeight / 2;
-    const speakerBg = this.scene.add.rectangle(boxWidth / 2, speakerBgY, boxWidth, speakerBgHeight, 0xc9a227, 0.2);
+    // Speaker name highlight bar
+    const speakerBgHeight = speakerSize + 8;
+    const speakerBg = this.scene.add.rectangle(
+      boxX + boxWidth / 2,
+      boxY + padding + speakerBgHeight / 2 - 2,
+      boxWidth,
+      speakerBgHeight,
+      0xc9a227,
+      0.2
+    );
+    speakerBg.setScrollFactor(0);
     this.dialogueContainer.add(speakerBg);
 
-    // Speaker name - positioned relative to container (0,0 is top-left of box)
-    const speakerText = this.scene.add.text(padding, padding, this.currentNode.speaker, {
+    // Speaker name
+    const speakerText = this.scene.add.text(boxX + padding, boxY + padding, this.currentNode.speaker, {
       fontFamily: 'Georgia, serif',
       fontSize: `${speakerSize}px`,
       color: '#FFD700',
       fontStyle: 'bold',
     });
+    speakerText.setScrollFactor(0);
     this.dialogueContainer.add(speakerText);
 
-    // Dialogue text with better line spacing
-    const dialogueText = this.scene.add.text(padding, padding + speakerSize + lineSpacing, this.currentNode.text, {
-      fontFamily: 'Georgia, serif',
-      fontSize: `${textSize}px`,
-      color: '#F5E6D3',
-      wordWrap: { width: boxWidth - padding * 2 },
-      lineSpacing: lineSpacing / 2,
-    });
+    // Dialogue text
+    const dialogueText = this.scene.add.text(
+      boxX + padding,
+      boxY + padding + speakerSize + lineSpacing,
+      this.currentNode.text,
+      {
+        fontFamily: 'Georgia, serif',
+        fontSize: `${textSize}px`,
+        color: '#F5E6D3',
+        wordWrap: { width: boxWidth - padding * 2 },
+        lineSpacing: lineSpacing / 2,
+      }
+    );
+    dialogueText.setScrollFactor(0);
     this.dialogueContainer.add(dialogueText);
 
     // Responses or continue prompt
@@ -692,30 +712,33 @@ export class DialogueSystem {
     if (!this.dialogueContainer) return;
 
     const boxWidth = this.dialogueContainer.getData('boxWidth') || 300;
-    const boxHeight = this.dialogueContainer.getData('boxHeight') || 140;
-    const zoom = this.dialogueContainer.getData('zoom') || 1;
-    const responseSize = Math.round(11 / zoom);
-    const padding = 12 / zoom;
-    const responseSpacing = 18 / zoom;
+    const boxHeight = this.dialogueContainer.getData('boxHeight') || 120;
+    const boxX = this.dialogueContainer.getData('boxX') || 20;
+    const boxY = this.dialogueContainer.getData('boxY') || 400;
 
-    // Start responses at 45% down the box to leave room for speaker + dialogue
-    let yOffset = boxHeight * 0.45;
+    const responseSize = 12;
+    const padding = 12;
+    const responseSpacing = 20;
+
+    // Start responses at 50% down the box
+    let yOffset = boxY + boxHeight * 0.5;
 
     responses.forEach((response, index) => {
       // Check condition if present
       if (response.condition && !response.condition()) return;
 
       const responseText = this.scene.add.text(
-        padding + 8 / zoom,
+        boxX + padding + 8,
         yOffset,
         `${index + 1}. ${response.text}`,
         {
           fontFamily: 'Georgia, serif',
           fontSize: `${responseSize}px`,
           color: '#C19A6B',
-          wordWrap: { width: boxWidth - padding * 2 - 16 / zoom },
+          wordWrap: { width: boxWidth - padding * 2 - 16 },
         }
       );
+      responseText.setScrollFactor(0);
       responseText.setInteractive({ useHandCursor: true });
 
       responseText.on('pointerover', () => {
@@ -738,21 +761,23 @@ export class DialogueSystem {
       this.dialogueContainer!.add(responseText);
 
       // Calculate actual text height for proper spacing
-      yOffset += Math.max(responseSpacing, responseText.height + 4 / zoom);
+      yOffset += Math.max(responseSpacing, responseText.height + 4);
     });
   }
 
   private displayContinuePrompt(nextNodeId: string): void {
     if (!this.dialogueContainer) return;
 
-    const boxHeight = this.dialogueContainer.getData('boxHeight') || 150;
-    const zoom = this.dialogueContainer.getData('zoom') || 1;
-    const promptSize = Math.round(8 / zoom);
-    const padding = 10 / zoom;
+    const boxHeight = this.dialogueContainer.getData('boxHeight') || 120;
+    const boxX = this.dialogueContainer.getData('boxX') || 20;
+    const boxY = this.dialogueContainer.getData('boxY') || 400;
+
+    const promptSize = 10;
+    const padding = 12;
 
     const continueText = this.scene.add.text(
-      padding,
-      boxHeight - 15 / zoom,
+      boxX + padding,
+      boxY + boxHeight - 18,
       '[Press SPACE to continue]',
       {
         fontFamily: 'Georgia, serif',
@@ -761,6 +786,7 @@ export class DialogueSystem {
         fontStyle: 'italic',
       }
     );
+    continueText.setScrollFactor(0);
     this.dialogueContainer.add(continueText);
 
     this.scene.input.keyboard?.once('keydown-SPACE', () => {
@@ -771,14 +797,16 @@ export class DialogueSystem {
   private displayEndPrompt(): void {
     if (!this.dialogueContainer) return;
 
-    const boxHeight = this.dialogueContainer.getData('boxHeight') || 150;
-    const zoom = this.dialogueContainer.getData('zoom') || 1;
-    const promptSize = Math.round(8 / zoom);
-    const padding = 10 / zoom;
+    const boxHeight = this.dialogueContainer.getData('boxHeight') || 120;
+    const boxX = this.dialogueContainer.getData('boxX') || 20;
+    const boxY = this.dialogueContainer.getData('boxY') || 400;
+
+    const promptSize = 10;
+    const padding = 12;
 
     const endText = this.scene.add.text(
-      padding,
-      boxHeight - 15 / zoom,
+      boxX + padding,
+      boxY + boxHeight - 18,
       '[Press SPACE or ESC to close]',
       {
         fontFamily: 'Georgia, serif',
@@ -787,6 +815,7 @@ export class DialogueSystem {
         fontStyle: 'italic',
       }
     );
+    endText.setScrollFactor(0);
     this.dialogueContainer.add(endText);
 
     this.scene.input.keyboard?.once('keydown-SPACE', () => {
