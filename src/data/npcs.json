@@ -1,0 +1,132 @@
+{
+  "npcTypes": [
+    {
+      "id": "npc_portuguese",
+      "name": "Portuguese Merchant",
+      "description": "A fidalgo or casado trader from Portugal, dealing in goods from the Carreira da Índia.",
+      "spriteColor": "#2C1810",
+      "defaultGoods": ["good_silk", "good_porcelain"],
+      "dialogueStyle": "formal",
+      "greetings": [
+        "Bom dia, senhor!",
+        "Welcome to my establishment!",
+        "The finest goods from Lisboa!"
+      ],
+      "farewells": [
+        "Até logo!",
+        "May God speed your ventures!",
+        "Safe travels, senhor!"
+      ]
+    },
+    {
+      "id": "npc_hindu",
+      "name": "Hindu Trader",
+      "description": "A local merchant family with generations of trading experience on the Malabar coast.",
+      "spriteColor": "#F5E6D3",
+      "defaultGoods": ["good_pepper", "good_cinnamon", "good_ginger"],
+      "dialogueStyle": "friendly",
+      "greetings": [
+        "Namaste, traveler!",
+        "Welcome, friend!",
+        "The finest spices await!"
+      ],
+      "farewells": [
+        "Shubh yatra!",
+        "Safe travels!",
+        "May your path be blessed!"
+      ]
+    },
+    {
+      "id": "npc_arab",
+      "name": "Arab Middleman",
+      "description": "A trader from Hormuz or the Arabian coast, with connections across the Indian Ocean.",
+      "spriteColor": "#4A1C1C",
+      "defaultGoods": ["good_cloves", "good_nutmeg"],
+      "dialogueStyle": "shrewd",
+      "greetings": [
+        "As-salamu alaykum!",
+        "Peace be upon you!",
+        "I deal in rarities..."
+      ],
+      "farewells": [
+        "Ma'a salama!",
+        "Until we meet again!",
+        "Inshallah, we trade again!"
+      ]
+    },
+    {
+      "id": "npc_official",
+      "name": "Customs Official",
+      "description": "A Portuguese official at the Alfandega (customs house), overseeing trade regulations.",
+      "spriteColor": "#1A1A1A",
+      "defaultGoods": [],
+      "dialogueStyle": "bureaucratic",
+      "greetings": [
+        "Halt! Papers, please.",
+        "All goods must be declared.",
+        "The King's tax must be paid."
+      ],
+      "farewells": [
+        "Move along.",
+        "Your papers are in order.",
+        "Next!"
+      ]
+    },
+    {
+      "id": "npc_sailor",
+      "name": "Portuguese Sailor",
+      "description": "A crew member from the carracks, often with stories from the voyage.",
+      "spriteColor": "#4A3728",
+      "defaultGoods": [],
+      "dialogueStyle": "casual",
+      "greetings": [
+        "Ahoy there!",
+        "Just arrived from Lisboa!",
+        "Six months at sea..."
+      ],
+      "farewells": [
+        "Fair winds!",
+        "See you at the tavern!",
+        "Back to the ship..."
+      ]
+    },
+    {
+      "id": "npc_scribe",
+      "name": "Customs Scribe",
+      "description": "A document handler at the Alfandega, responsible for recording all trade transactions and maintaining the Crown's ledgers.",
+      "spriteColor": "#2A2A2A",
+      "defaultGoods": [],
+      "dialogueStyle": "meticulous",
+      "greetings": [
+        "Manifest, please.",
+        "I shall need your cargo list.",
+        "All goods must be documented."
+      ],
+      "farewells": [
+        "Your records are filed.",
+        "The ledger is updated.",
+        "Next trader, please."
+      ]
+    }
+  ],
+  "socialClasses": {
+    "portuguese": {
+      "fidalgo": "Portuguese nobility",
+      "casado": "Married Portuguese settler",
+      "soldado": "Portuguese soldier",
+      "cleric": "Church official"
+    },
+    "local": {
+      "brahmin": "Hindu priestly class",
+      "merchant": "Trading caste",
+      "artisan": "Craftsmen",
+      "laborer": "Workers"
+    },
+    "foreign": {
+      "arab": "Arab traders",
+      "persian": "Persian merchants",
+      "african": "Enslaved Africans",
+      "chinese": "Chinese traders from Macau"
+    }
+  }
+}

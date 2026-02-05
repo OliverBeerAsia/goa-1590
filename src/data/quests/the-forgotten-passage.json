@@ -1,0 +1,544 @@
+{
+  "id": "quest_the_forgotten_passage",
+  "title": "The Forgotten Passage",
+  "description": "An old merchant hints at trade routes that predate Portuguese control—ancient paths connecting Goa to the Deccan sultanates through the mountains. These routes could bypass Crown monopolies entirely, but trust must be earned from families who have guarded these secrets for generations. The discovery will force a choice: preserve tradition, seek royal favor, or pursue personal gain.",
+  "faction": "old_routes",
+  "giver": "resident_1",
+  "requirements": [
+    {
+      "type": "reputation",
+      "target": "old_routes",
+      "value": 15,
+      "comparison": "gte"
+    }
+  ],
+  "stages": [
+    {
+      "id": "stage_1_the_whisper",
+      "objective": "Speak with Elder Nair in the Old Quarter. He has been watching you and may share something important.",
+      "type": "talk",
+      "target": "resident_1",
+      "choices": [
+        {
+          "id": "choice_listen_carefully",
+          "text": "Listen intently to what the elder has to say",
+          "nextStageId": "stage_2_the_trust",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": 5
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_approach",
+              "value": "respectful"
+            }
+          ]
+        },
+        {
+          "id": "choice_ask_directly",
+          "text": "Ask directly about alternative trade routes",
+          "nextStageId": "stage_2_the_trust",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_approach",
+              "value": "direct"
+            }
+          ]
+        },
+        {
+          "id": "choice_offer_payment",
+          "text": "Offer gold in exchange for information",
+          "nextStageId": "stage_2_the_trust",
+          "effects": [
+            {
+              "type": "gold",
+              "value": -200
+            },
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": -5
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_approach",
+              "value": "transactional"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stage_2_the_trust",
+      "objective": "Earn the trust of traditional trading families. Visit Guild Master Chen and help resolve a dispute, or assist Abbas the Caravan Master with a delivery.",
+      "type": "talk",
+      "target": "cloth_vendor",
+      "choices": [
+        {
+          "id": "choice_help_guild",
+          "text": "Help Guild Master Chen resolve a trade dispute between two merchant families",
+          "nextStageId": "stage_2b_earn_trust_guild",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_trust_method",
+              "value": "guild"
+            }
+          ]
+        },
+        {
+          "id": "choice_help_caravan",
+          "text": "Assist Abbas the Caravan Master with a difficult overland delivery",
+          "nextStageId": "stage_2b_earn_trust_caravan",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_trust_method",
+              "value": "caravan"
+            }
+          ]
+        },
+        {
+          "id": "choice_both_tasks",
+          "text": "Complete both tasks to earn maximum trust",
+          "nextStageId": "stage_2b_earn_trust_both",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_trust_method",
+              "value": "both"
+            }
+          ],
+          "condition": {
+            "type": "reputation",
+            "target": "old_routes",
+            "value": 25,
+            "comparison": "gte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stage_2b_earn_trust_guild",
+      "objective": "Mediate between two merchant families over a disputed cargo. Find a solution that honors both parties.",
+      "type": "talk",
+      "target": "cloth_vendor",
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "old_routes",
+          "value": 10
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_guild_trust",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_2b_earn_trust_caravan",
+      "objective": "Help Abbas transport valuable goods through dangerous territory. Protect the caravan from bandits.",
+      "type": "travel",
+      "target": "location_caravan_route",
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "old_routes",
+          "value": 15
+        },
+        {
+          "type": "gold",
+          "value": 300
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_caravan_trust",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_2b_earn_trust_both",
+      "objective": "Complete both the guild mediation and caravan protection. Your dedication has been noted.",
+      "type": "talk",
+      "target": "resident_1",
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "old_routes",
+          "value": 20
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_guild_trust",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_caravan_trust",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_3_the_map",
+      "objective": "Meet with Abbas the Caravan Master. He will share knowledge of an ancient overland route that connects Goa to the Deccan sultanates, bypassing Portuguese-controlled ports.",
+      "type": "talk",
+      "target": "arab_trader",
+      "choices": [
+        {
+          "id": "choice_study_map",
+          "text": "Study the route carefully and memorize the landmarks",
+          "nextStageId": "stage_4_the_journey",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_map_quality",
+              "value": "memorized"
+            },
+            {
+              "type": "item",
+              "target": "item_ancient_route_map",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": "choice_ask_questions",
+          "text": "Ask detailed questions about dangers and safe houses along the route",
+          "nextStageId": "stage_4_the_journey",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_map_quality",
+              "value": "detailed"
+            },
+            {
+              "type": "item",
+              "target": "item_ancient_route_map",
+              "value": 1
+            },
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "id": "choice_take_notes",
+          "text": "Take written notes of the route (risky if discovered)",
+          "nextStageId": "stage_4_the_journey",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_map_quality",
+              "value": "written"
+            },
+            {
+              "type": "item",
+              "target": "item_ancient_route_map",
+              "value": 1
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_has_written_notes",
+              "value": true
+            }
+          ]
+        }
+      ],
+      "onComplete": [
+        {
+          "type": "flag",
+          "target": "forgotten_passage_map_received",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_4_the_journey",
+      "objective": "Make a test journey using the ancient route. Travel to a Deccan trading post and return with goods that prove the route's viability.",
+      "type": "travel",
+      "target": "location_deccan_trading_post",
+      "choices": [
+        {
+          "id": "choice_journey_solo",
+          "text": "Travel alone to minimize attention",
+          "nextStageId": "stage_5_the_discovery",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_journey_method",
+              "value": "solo"
+            },
+            {
+              "type": "gold",
+              "value": -150
+            }
+          ]
+        },
+        {
+          "id": "choice_journey_with_guide",
+          "text": "Hire a local guide familiar with the route",
+          "nextStageId": "stage_5_the_discovery",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_journey_method",
+              "value": "guided"
+            },
+            {
+              "type": "gold",
+              "value": -300
+            },
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": 5
+            }
+          ]
+        }
+      ],
+      "onComplete": [
+        {
+          "type": "item",
+          "target": "good_silk",
+          "value": 5
+        },
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": 10
+        },
+        {
+          "type": "gold",
+          "value": 500
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_journey_complete",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_5_the_discovery",
+      "objective": "Return to Goa and report your success. But Elder Nair has troubling news—someone else knows about the route. Portuguese informants or a rival merchant may have discovered your activities.",
+      "type": "talk",
+      "target": "resident_1",
+      "choices": [
+        {
+          "id": "choice_investigate",
+          "text": "Investigate who else knows about the route",
+          "nextStageId": "stage_5b_investigation",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_investigated",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "choice_proceed_carefully",
+          "text": "Proceed carefully but don't waste time investigating",
+          "nextStageId": "stage_6_the_choice",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "forgotten_passage_investigated",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stage_5b_investigation",
+      "objective": "Search for clues about who discovered the route. Check the docks, question informants, or examine recent Crown activities.",
+      "type": "talk",
+      "target": "spice_middleman",
+      "onComplete": [
+        {
+          "type": "flag",
+          "target": "forgotten_passage_discoverer",
+          "value": "crown_informant"
+        },
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": -5
+        }
+      ]
+    },
+    {
+      "id": "stage_6_the_choice",
+      "objective": "The moment of decision. The ancient route is valuable—too valuable to ignore. How will you use this knowledge?",
+      "type": "talk",
+      "target": "resident_1",
+      "choices": [
+        {
+          "id": "choice_share_community",
+          "text": "Share the route with the Old Routes community, preserving tradition and strengthening the network",
+          "nextStageId": "stage_7_legacy_tradition",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": 30
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": -15
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_choice",
+              "value": "tradition"
+            }
+          ]
+        },
+        {
+          "id": "choice_sell_crown",
+          "text": "Sell the information to the Portuguese Crown for gold and royal favor",
+          "nextStageId": "stage_7_legacy_betrayal",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": -50
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": 25
+            },
+            {
+              "type": "gold",
+              "value": 2000
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_choice",
+              "value": "betrayal"
+            },
+            {
+              "type": "flag",
+              "target": "old_routes_betrayed",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "choice_keep_secret",
+          "text": "Keep the route secret for personal use, maximizing your own profit",
+          "nextStageId": "stage_7_legacy_greed",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "old_routes",
+              "value": -10
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_choice",
+              "value": "greed"
+            },
+            {
+              "type": "flag",
+              "target": "forgotten_passage_personal_route",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stage_7_legacy_tradition",
+      "objective": "The route has been shared with trusted families. The Old Routes network grows stronger, and you are honored as a keeper of tradition. The route will be used wisely, preserving ancient connections while avoiding Crown attention.",
+      "type": "talk",
+      "target": "resident_1",
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "old_routes",
+          "value": 20
+        },
+        {
+          "type": "unlock",
+          "target": "old_routes_exclusive_trade",
+          "value": true
+        },
+        {
+          "type": "flag",
+              "target": "forgotten_passage_completed",
+              "value": "tradition"
+        }
+      ]
+    },
+    {
+      "id": "stage_7_legacy_betrayal",
+      "objective": "You have sold the route to the Crown. The Portuguese will close it down, arresting those who use it. The Old Routes families will never trust you again, but you have gained royal favor and substantial gold.",
+      "type": "talk",
+      "target": "customs_officer",
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": 15
+        },
+        {
+          "type": "unlock",
+          "target": "crown_administrative_access",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_completed",
+          "value": "betrayal"
+        }
+      ]
+    },
+    {
+      "id": "stage_7_legacy_greed",
+      "objective": "You keep the route secret, using it exclusively for your own trade. Your profits increase dramatically, but the Old Routes families sense your selfishness. The route remains unknown to both Crown and community—for now.",
+      "type": "talk",
+      "target": "resident_1",
+      "onComplete": [
+        {
+          "type": "unlock",
+          "target": "personal_deccan_route",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "forgotten_passage_completed",
+          "value": "greed"
+        }
+      ]
+    }
+  ],
+  "rewards": [
+    {
+      "type": "reputation",
+      "target": "old_routes",
+      "value": 25
+    },
+    {
+      "type": "item",
+      "target": "item_ancient_route_map",
+      "value": 1
+    },
+    {
+      "type": "unlock",
+      "target": "deccan_trade_access",
+      "value": true
+    }
+  ]
+}

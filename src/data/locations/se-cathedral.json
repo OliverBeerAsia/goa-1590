@@ -1,0 +1,291 @@
+{
+  "compressionlevel": -1,
+  "height": 30,
+  "width": 35,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "se_cathedral"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "Se Cathedral"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "value": "The great cathedral of Goa, still under construction in the 1590s"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "The Se Cathedral was begun in 1562 under orders of King Sebastian of Portugal and was not completed until 1619. In the 1590s, it was an active construction site, with the eastern tower and parts of the facade still being built."
+    },
+    {
+      "name": "atmosphere",
+      "type": "string",
+      "value": "solemn, echoing, incense, construction sounds"
+    },
+    {
+      "name": "ambientSounds",
+      "type": "string",
+      "value": "church_echo, distant_chanting, hammer_chisel, scaffolding_creak"
+    }
+  ],
+  "connections": [
+    {
+      "id": "to_ribeira_grande",
+      "target": "ribeira_grande",
+      "x": 17,
+      "y": 29,
+      "direction": "south",
+      "description": "Exit to the streets of Goa"
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "cathedral_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 7,
+      "columns": 7,
+      "tiles": [
+        { "id": 0, "type": "stone_floor", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Worn flagstone flooring" }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Massive granite walls" }] },
+        { "id": 3, "type": "column", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Corinthian column supporting the vaulted ceiling" }] },
+        { "id": 4, "type": "pew", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Wooden pew for worshippers" }] },
+        { "id": 5, "type": "scaffolding", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Wooden scaffolding for ongoing construction work" }] },
+        { "id": 6, "type": "altar", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "The sacred altar, adorned with gilded decorations" }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 35,
+      "height": 30,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 4, 4, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 5, 5, 0, 2, 2,
+        2, 2, 0, 0, 4, 4, 4, 4, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 4, 4, 5, 5, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 544,
+          "y": 448,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" },
+            { "name": "spawnDirection", "type": "string", "value": "north" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "cathedral_treasurer",
+          "type": "npc",
+          "x": 256,
+          "y": 160,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_cathedral_treasurer" },
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Dom Gaspar de Leão - Cathedral Treasurer" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "description", "type": "string", "value": "A stern-faced cleric in fine vestments, responsible for the cathedral's considerable finances and the funding of its construction." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_gaspar_leao" },
+            { "name": "schedule", "type": "string", "value": "cathedral_day" },
+            { "name": "goods", "type": "string", "value": "" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "parish_priest",
+          "type": "npc",
+          "x": 544,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_parish_priest" },
+            { "name": "npcType", "type": "string", "value": "npc_priest" },
+            { "name": "npcName", "type": "string", "value": "Padre Tomás de Aquino" },
+            { "name": "faction", "type": "string", "value": "church" },
+            { "name": "description", "type": "string", "value": "A gentle priest who tends to the spiritual needs of the congregation, often seen praying near the altar or hearing confessions." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_padre_tomas" },
+            { "name": "schedule", "type": "string", "value": "cathedral_services" },
+            { "name": "goods", "type": "string", "value": "" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "master_builder",
+          "type": "npc",
+          "x": 960,
+          "y": 288,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_master_builder" },
+            { "name": "npcType", "type": "string", "value": "npc_worker" },
+            { "name": "npcName", "type": "string", "value": "Mestre Afonso Dias - Master Builder" },
+            { "name": "faction", "type": "string", "value": "artisan" },
+            { "name": "description", "type": "string", "value": "A weathered Portuguese craftsman overseeing the cathedral's construction. His hands are calloused from decades of stonework, and he barks orders to his crew with authority." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_mestre_afonso" },
+            { "name": "schedule", "type": "string", "value": "construction_day" },
+            { "name": "goods", "type": "string", "value": "" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "exit_to_ribeira",
+          "type": "transition",
+          "x": 416,
+          "y": 464,
+          "width": 288,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira_grande" },
+            { "name": "targetSpawn", "type": "string", "value": "from_cathedral" },
+            { "name": "transitionType", "type": "string", "value": "door" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 10,
+          "name": "altar_area",
+          "type": "zone",
+          "x": 448,
+          "y": 32,
+          "width": 224,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "The High Altar" },
+            { "name": "description", "type": "string", "value": "The sacred heart of the cathedral. Golden light filters through unfinished windows, illuminating the gilded altarpiece dedicated to St. Catherine of Alexandria." },
+            { "name": "restricted", "type": "bool", "value": true },
+            { "name": "requiredReputation", "type": "string", "value": "church:friendly" }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "main_nave",
+          "type": "zone",
+          "x": 288,
+          "y": 160,
+          "width": 544,
+          "height": 256,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "The Grand Nave" },
+            { "name": "description", "type": "string", "value": "The vast central aisle of the cathedral, flanked by towering Corinthian columns. Footsteps echo off the vaulted ceiling. The smell of incense mingles with stone dust from the ongoing construction." }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "left_aisle",
+          "type": "zone",
+          "x": 64,
+          "y": 128,
+          "width": 224,
+          "height": 288,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "North Aisle" },
+            { "name": "description", "type": "string", "value": "The completed northern aisle, with side chapels dedicated to various saints. Wooden pews line the walls for worshippers." }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "right_aisle",
+          "type": "zone",
+          "x": 832,
+          "y": 128,
+          "width": 224,
+          "height": 288,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "South Aisle - Construction Zone" },
+            { "name": "description", "type": "string", "value": "The southern aisle remains partially under construction. Wooden scaffolding climbs the walls, and workers can be heard hammering and chiseling above. Watch your step among the building materials." },
+            { "name": "hazard", "type": "string", "value": "falling_debris" }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "entrance_narthex",
+          "type": "zone",
+          "x": 416,
+          "y": 432,
+          "width": 288,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "The Narthex" },
+            { "name": "description", "type": "string", "value": "The entrance vestibule of the cathedral. Heavy wooden doors open to the bustling streets of Goa. Beggars and pilgrims often gather here seeking alms." }
+          ]
+        }
+      ]
+    }
+  ]
+}

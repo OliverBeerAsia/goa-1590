@@ -1,0 +1,524 @@
+{
+  "compressionlevel": -1,
+  "height": 18,
+  "width": 20,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "tavern"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "A Nau - The Ship Tavern"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "value": "A warm, candlelit tavern where sailors, traders, and travelers gather to share stories and conduct informal business"
+    },
+    {
+      "name": "locationType",
+      "type": "string",
+      "value": "interior"
+    },
+    {
+      "name": "atmosphere",
+      "type": "string",
+      "value": "warm_candlelight,smoke_haze,lively_conversation"
+    },
+    {
+      "name": "ambientLight",
+      "type": "string",
+      "value": "warm_orange"
+    },
+    {
+      "name": "ambientSound",
+      "type": "string",
+      "value": "tavern_chatter,fire_crackle,dice_roll"
+    },
+    {
+      "name": "factionInfluence",
+      "type": "string",
+      "value": "free_traders"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "Taverns like A Nau served as informal meeting places where information flowed as freely as the wine. Named after the Portuguese sailing ships, it was frequented by sailors between voyages and merchants seeking discrete transactions."
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "tavern_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 10,
+      "columns": 10,
+      "tiles": [
+        { "id": 0, "type": "wooden_floor", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "wood" }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "stone_plaster" }] },
+        { "id": 3, "type": "dock", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 4, "type": "bar_counter", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "dark_wood" }] },
+        { "id": 5, "type": "roof", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 6, "type": "storage", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 7, "type": "table_seating", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "interactive", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "wood" }] },
+        { "id": 8, "type": "fireplace", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "light_source", "type": "bool", "value": true }, { "name": "warmth", "type": "int", "value": 3 }] },
+        { "id": 9, "type": "entrance", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "transition", "type": "bool", "value": true }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 20,
+      "height": 18,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 2,
+        2, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 7, 0, 2,
+        2, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 2, 0, 0, 7, 0, 2,
+        2, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 2,
+        2, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 7, 7, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 7, 7, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 2,
+        2, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 9, 9, 2, 2, 2, 2, 2, 2, 2, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 304,
+          "y": 256,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" },
+            { "name": "facing", "type": "string", "value": "north" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "tavern_keeper",
+          "type": "npc",
+          "x": 288,
+          "y": 48,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_tavern_keeper" },
+            { "name": "npcName", "type": "string", "value": "Maria da Costa - Tavern Keeper" },
+            { "name": "npcId", "type": "string", "value": "maria_tavern_keeper" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "evening,night" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_maria" },
+            { "name": "services", "type": "string", "value": "drink,food,room,rumors" },
+            { "name": "personality", "type": "string", "value": "A stout widow who has run A Nau for fifteen years. She sees everything and knows everyone, but keeps her counsel unless properly persuaded." }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "information_broker",
+          "type": "npc",
+          "x": 544,
+          "y": 40,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_information_broker" },
+            { "name": "npcName", "type": "string", "value": "Yusuf al-Rashid - Information Broker" },
+            { "name": "npcId", "type": "string", "value": "yusuf_broker" },
+            { "name": "faction", "type": "string", "value": "free_traders" },
+            { "name": "factionRank", "type": "string", "value": "contact" },
+            { "name": "schedule", "type": "string", "value": "evening,night" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_yusuf" },
+            { "name": "services", "type": "string", "value": "information,contacts,smuggling_tips,faction_quests" },
+            { "name": "personality", "type": "string", "value": "An Arab merchant who deals more in secrets than spices. He occupies the private back room, meeting with those who know to ask for him. He serves as the player's primary contact with the Free Traders faction." },
+            { "name": "questGiver", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "sailor_marcos",
+          "type": "npc",
+          "x": 96,
+          "y": 104,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "Marcos - Carrack Sailor" },
+            { "name": "npcId", "type": "string", "value": "marcos_sailor" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "evening,night" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_sailor_marcos" },
+            { "name": "personality", "type": "string", "value": "A weathered Portuguese sailor between voyages. He has tales of the Spice Islands and knows which captains are hiring." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "main_hall" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "sailor_fernao",
+          "type": "npc",
+          "x": 384,
+          "y": 152,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "Fernão - Ship's Cook" },
+            { "name": "npcId", "type": "string", "value": "fernao_cook" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "evening,night" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_sailor_fernao" },
+            { "name": "personality", "type": "string", "value": "A jovial ship's cook who supplements his wages with dice games. He knows which ships carry what cargo." },
+            { "name": "activity", "type": "string", "value": "gambling" }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "exit_to_ribeira",
+          "type": "transition",
+          "x": 288,
+          "y": 272,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira_grande" },
+            { "name": "targetSpawn", "type": "string", "value": "tavern_entrance" },
+            { "name": "transitionType", "type": "string", "value": "door" },
+            { "name": "preferredTime", "type": "string", "value": "evening,night" },
+            { "name": "prompt", "type": "string", "value": "Exit to Ribeira Grande" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 10,
+          "name": "fireplace_corner",
+          "type": "zone",
+          "x": 32,
+          "y": 16,
+          "width": 64,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Fireplace Corner" },
+            { "name": "description", "type": "string", "value": "A warm corner near the crackling fire. Good place to dry off after the monsoon rains." },
+            { "name": "lightLevel", "type": "string", "value": "bright" },
+            { "name": "warmth", "type": "int", "value": 3 }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "bar_area",
+          "type": "zone",
+          "x": 192,
+          "y": 48,
+          "width": 224,
+          "height": 48,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "The Bar" },
+            { "name": "description", "type": "string", "value": "The main bar where Maria serves palm wine, arrack, and Portuguese wines to thirsty patrons." },
+            { "name": "service", "type": "string", "value": "drinks" }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "main_hall",
+          "type": "zone",
+          "x": 32,
+          "y": 80,
+          "width": 416,
+          "height": 176,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Main Hall" },
+            { "name": "description", "type": "string", "value": "The heart of the tavern where patrons gather at rough wooden tables. Stories of distant lands mix with the smoke from oil lamps." },
+            { "name": "lightLevel", "type": "string", "value": "dim" }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "back_room",
+          "type": "zone",
+          "x": 480,
+          "y": 16,
+          "width": 128,
+          "height": 80,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "The Back Room" },
+            { "name": "description", "type": "string", "value": "A secluded alcove where Yusuf conducts his business. Entry requires knowing the right words or the right people." },
+            { "name": "privateArea", "type": "bool", "value": true },
+            { "name": "factionTerritory", "type": "string", "value": "free_traders" },
+            { "name": "lightLevel", "type": "string", "value": "very_dim" }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "gambling_corner",
+          "type": "zone",
+          "x": 544,
+          "y": 192,
+          "width": 64,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Gambling Corner" },
+            { "name": "description", "type": "string", "value": "A corner where sailors risk their wages on dice and cards. The house takes a small cut, and Maria keeps order." },
+            { "name": "activity", "type": "string", "value": "gambling" },
+            { "name": "minigame", "type": "string", "value": "dice_game" }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "entrance",
+          "type": "zone",
+          "x": 288,
+          "y": 256,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Entrance" },
+            { "name": "description", "type": "string", "value": "The tavern entrance, marked by a weathered ship's figurehead above the door." },
+            { "name": "transitionPoint", "type": "bool", "value": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "lighting",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 20,
+          "name": "fireplace_light",
+          "type": "light",
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "fire" },
+            { "name": "radius", "type": "int", "value": 96 },
+            { "name": "color", "type": "string", "value": "#FF6B35" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.9 }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "bar_lamp_1",
+          "type": "light",
+          "x": 224,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "oil_lamp" },
+            { "name": "radius", "type": "int", "value": 48 },
+            { "name": "color", "type": "string", "value": "#FFB347" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.6 }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "bar_lamp_2",
+          "type": "light",
+          "x": 352,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "oil_lamp" },
+            { "name": "radius", "type": "int", "value": 48 },
+            { "name": "color", "type": "string", "value": "#FFB347" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.6 }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "table_candle_1",
+          "type": "light",
+          "x": 80,
+          "y": 104,
+          "width": 8,
+          "height": 8,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "candle" },
+            { "name": "radius", "type": "int", "value": 32 },
+            { "name": "color", "type": "string", "value": "#FFE4B5" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.4 }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "table_candle_2",
+          "type": "light",
+          "x": 496,
+          "y": 104,
+          "width": 8,
+          "height": 8,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "candle" },
+            { "name": "radius", "type": "int", "value": 32 },
+            { "name": "color", "type": "string", "value": "#FFE4B5" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.4 }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "table_candle_3",
+          "type": "light",
+          "x": 240,
+          "y": 152,
+          "width": 8,
+          "height": 8,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "candle" },
+            { "name": "radius", "type": "int", "value": 32 },
+            { "name": "color", "type": "string", "value": "#FFE4B5" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.4 }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "back_room_lamp",
+          "type": "light",
+          "x": 544,
+          "y": 40,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "oil_lamp" },
+            { "name": "radius", "type": "int", "value": 40 },
+            { "name": "color", "type": "string", "value": "#8B4513" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.3 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "effects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 30,
+          "name": "smoke_haze",
+          "type": "effect",
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 288,
+          "properties": [
+            { "name": "effectType", "type": "string", "value": "smoke" },
+            { "name": "density", "type": "float", "value": 0.2 },
+            { "name": "color", "type": "string", "value": "#8B7355" },
+            { "name": "drift", "type": "string", "value": "slow_rise" }
+          ]
+        },
+        {
+          "id": 31,
+          "name": "fireplace_embers",
+          "type": "effect",
+          "x": 32,
+          "y": 16,
+          "width": 64,
+          "height": 64,
+          "properties": [
+            { "name": "effectType", "type": "string", "value": "embers" },
+            { "name": "particleCount", "type": "int", "value": 8 },
+            { "name": "color", "type": "string", "value": "#FF4500" }
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_ribeira_grande",
+      "targetLocation": "ribeira_grande",
+      "targetSpawn": "tavern_entrance",
+      "transitionType": "door",
+      "preferredTime": ["evening", "night"],
+      "note": "The tavern is most active during evening and night hours. During the day, only Maria tends bar for the occasional patron."
+    }
+  ],
+  "schedule": {
+    "morning": {
+      "activity": "quiet",
+      "npcsPresent": ["maria_tavern_keeper"],
+      "description": "The tavern is nearly empty. Maria sweeps the floor and prepares for the evening crowd."
+    },
+    "afternoon": {
+      "activity": "sparse",
+      "npcsPresent": ["maria_tavern_keeper"],
+      "description": "A few locals drift in for a drink, but the real business happens after dark."
+    },
+    "evening": {
+      "activity": "busy",
+      "npcsPresent": ["maria_tavern_keeper", "yusuf_broker", "marcos_sailor", "fernao_cook"],
+      "description": "The tavern comes alive as sailors arrive from the docks. The air fills with smoke, laughter, and the clink of cups."
+    },
+    "night": {
+      "activity": "lively",
+      "npcsPresent": ["maria_tavern_keeper", "yusuf_broker", "marcos_sailor", "fernao_cook"],
+      "description": "Peak hours. The gambling corner is full, Yusuf receives visitors in the back room, and deals are struck in shadowed corners."
+    }
+  }
+}

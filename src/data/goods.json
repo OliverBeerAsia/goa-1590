@@ -1,0 +1,110 @@
+{
+  "goods": [
+    {
+      "id": "good_pepper",
+      "name": "Pepper",
+      "basePrice": 15,
+      "category": "spice",
+      "origin": "Malabar Coast",
+      "description": "Black gold of the East. The most traded spice, valued across Europe for preserving meat and adding flavor. Portuguese traders pay premium prices.",
+      "weight": 1,
+      "rarity": 3,
+      "historicalNote": "Pepper was so valuable it was sometimes used as currency. The phrase 'peppercorn rent' comes from this era."
+    },
+    {
+      "id": "good_cinnamon",
+      "name": "Cinnamon",
+      "basePrice": 25,
+      "category": "spice",
+      "origin": "Ceylon (Sri Lanka)",
+      "description": "Aromatic bark from Ceylon. The Portuguese maintain a strict monopoly on this precious spice.",
+      "weight": 1,
+      "rarity": 5,
+      "historicalNote": "Portuguese control of Ceylon's cinnamon trade was absolute. They executed anyone caught selling to other Europeans."
+    },
+    {
+      "id": "good_cloves",
+      "name": "Cloves",
+      "basePrice": 40,
+      "category": "spice",
+      "origin": "Moluccas (Spice Islands)",
+      "description": "Precious aromatic flower buds from the distant Spice Islands. Worth more than gold by weight.",
+      "weight": 1,
+      "rarity": 8,
+      "historicalNote": "Cloves only grew naturally on a few small islands in the Moluccas, making them extraordinarily rare and valuable."
+    },
+    {
+      "id": "good_silk",
+      "name": "Silk",
+      "basePrice": 50,
+      "category": "fabric",
+      "origin": "China via Macau",
+      "description": "Luxurious fabric from the Middle Kingdom, brought to Goa via the Portuguese trading post in Macau.",
+      "weight": 2,
+      "rarity": 6,
+      "historicalNote": "The Macau-Goa-Lisbon trade route was one of the most profitable in the world, with silk being a primary cargo."
+    },
+    {
+      "id": "good_porcelain",
+      "name": "Porcelain",
+      "basePrice": 35,
+      "category": "luxury",
+      "origin": "China",
+      "description": "Fine blue and white ceramics. Fragile but highly valued by European nobility.",
+      "weight": 3,
+      "rarity": 5,
+      "historicalNote": "Chinese porcelain was so prized that European potters spent centuries trying to replicate its quality."
+    },
+    {
+      "id": "good_nutmeg",
+      "name": "Nutmeg",
+      "basePrice": 45,
+      "category": "spice",
+      "origin": "Banda Islands",
+      "description": "A rare spice from the tiny Banda Islands. Both the seed and its covering (mace) are valuable.",
+      "weight": 1,
+      "rarity": 9,
+      "historicalNote": "Nutmeg was believed to ward off plague. During outbreaks, its price could increase tenfold."
+    },
+    {
+      "id": "good_ginger",
+      "name": "Ginger",
+      "basePrice": 12,
+      "category": "spice",
+      "origin": "Malabar Coast",
+      "description": "Fresh or dried ginger root. Used in cooking and medicine throughout Europe.",
+      "weight": 1,
+      "rarity": 2,
+      "historicalNote": "Ginger was one of the most commonly traded spices, more affordable than pepper."
+    },
+    {
+      "id": "good_indigo",
+      "name": "Indigo",
+      "basePrice": 30,
+      "category": "commodity",
+      "origin": "Gujarat",
+      "description": "Deep blue dye extracted from plants. Essential for the European textile industry.",
+      "weight": 2,
+      "rarity": 4,
+      "historicalNote": "Indian indigo was superior to European woad and became a major trade commodity."
+    }
+  ],
+  "categories": {
+    "spice": {
+      "name": "Spices",
+      "description": "Aromatic substances used for flavoring, preserving, and medicine."
+    },
+    "fabric": {
+      "name": "Fabrics",
+      "description": "Textiles and cloth from across Asia."
+    },
+    "luxury": {
+      "name": "Luxury Goods",
+      "description": "High-value items for the wealthy."
+    },
+    "commodity": {
+      "name": "Commodities",
+      "description": "Bulk goods used in manufacturing and trade."
+    }
+  }
+}

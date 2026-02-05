@@ -1,0 +1,306 @@
+{
+  "compressionlevel": -1,
+  "height": 25,
+  "width": 30,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "alfandega"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "Alfandega - Customs House"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "The official customs house where all trade is taxed and regulated. Crown faction territory - every crate, every bale, every coin must be accounted for."
+    },
+    {
+      "name": "faction",
+      "type": "string",
+      "value": "crown"
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "alfandega_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 5,
+      "columns": 5,
+      "tiles": [
+        { "id": 0, "type": "ground", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "building", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 3, "type": "dock", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 4, "type": "counter", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactable", "type": "bool", "value": true }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 30,
+      "height": 25,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 5, 5, 5, 1, 3, 3, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 3, 3, 1, 5, 5, 5, 1, 3, 3,
+        3, 3, 1, 5, 5, 5, 1, 3, 3, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 3, 3, 1, 5, 5, 5, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 5, 5, 5, 5, 5, 5, 1, 1, 5, 5, 5, 5, 5, 5, 1, 1, 5, 5, 5, 5, 5, 5, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3,
+        3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3,
+        3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+      ]
+    },
+    {
+      "id": 2,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 480,
+          "y": 352,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "inspector_ferreira",
+          "type": "npc",
+          "x": 352,
+          "y": 144,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Inspector Álvaro Ferreira" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "rank", "type": "string", "value": "senior_inspector" },
+            { "name": "dialogue", "type": "string", "value": "ferreira_customs" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "customs_clerk",
+          "type": "npc",
+          "x": 544,
+          "y": 144,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Clerk Martins" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "rank", "type": "string", "value": "clerk" },
+            { "name": "dialogue", "type": "string", "value": "martins_ledger" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "head_scribe",
+          "type": "npc",
+          "x": 160,
+          "y": 64,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_scribe" },
+            { "name": "npcName", "type": "string", "value": "Scribe Gonçalves" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "rank", "type": "string", "value": "head_scribe" },
+            { "name": "dialogue", "type": "string", "value": "goncalves_documents" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "warehouse_guard",
+          "type": "npc",
+          "x": 768,
+          "y": 64,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Guard Rodrigues" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "rank", "type": "string", "value": "guard" },
+            { "name": "dialogue", "type": "string", "value": "rodrigues_storage" }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "exit_ribeira_grande",
+          "type": "transition",
+          "x": 416,
+          "y": 384,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira-grande" },
+            { "name": "targetSpawn", "type": "string", "value": "from_alfandega" },
+            { "name": "transitionText", "type": "string", "value": "Exit to Ribeira Grande" }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "exit_warehouse_district",
+          "type": "transition",
+          "x": 320,
+          "y": 336,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "warehouse-district" },
+            { "name": "targetSpawn", "type": "string", "value": "from_alfandega" },
+            { "name": "transitionText", "type": "string", "value": "To the Warehouse District" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 20,
+          "name": "main_hall",
+          "type": "zone",
+          "x": 64,
+          "y": 112,
+          "width": 832,
+          "height": 192,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Main Hall" },
+            { "name": "description", "type": "string", "value": "The great hall of the Alfandega. Officials sit behind counters, processing endless ledgers and manifests." }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "official_counters",
+          "type": "zone",
+          "x": 128,
+          "y": 144,
+          "width": 704,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Official Counters" },
+            { "name": "description", "type": "string", "value": "Three service counters where traders declare their goods and pay the King's taxes." }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "records_room_left",
+          "type": "zone",
+          "x": 64,
+          "y": 32,
+          "width": 160,
+          "height": 80,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Records Room" },
+            { "name": "description", "type": "string", "value": "Shelves lined with trade manifests, cargo lists, and tax records going back decades." }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "storage_inspection",
+          "type": "zone",
+          "x": 736,
+          "y": 32,
+          "width": 160,
+          "height": 80,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Inspection Storage" },
+            { "name": "description", "type": "string", "value": "Confiscated and quarantined goods awaiting inspection or release." }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "waiting_area",
+          "type": "zone",
+          "x": 64,
+          "y": 176,
+          "width": 832,
+          "height": 160,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Waiting Area" },
+            { "name": "description", "type": "string", "value": "Traders, merchants, and ship captains wait here - sometimes for hours - to have their paperwork processed." }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "entrance_vestibule",
+          "type": "zone",
+          "x": 320,
+          "y": 336,
+          "width": 320,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Entrance Vestibule" },
+            { "name": "description", "type": "string", "value": "The entrance to the Alfandega. Guards check credentials before allowing entry to the main hall." }
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "targetMap": "ribeira-grande",
+      "direction": "south",
+      "description": "Return to Ribeira Grande waterfront"
+    },
+    {
+      "targetMap": "warehouse-district",
+      "direction": "west",
+      "description": "Enter the Warehouse District"
+    }
+  ]
+}

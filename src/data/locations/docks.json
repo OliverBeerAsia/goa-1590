@@ -1,0 +1,754 @@
+{
+  "compressionlevel": -1,
+  "height": 20,
+  "width": 35,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "docks"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "The Docks - Goa Harbor"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "value": "The bustling waterfront where ships from Portugal, Arabia, and Asia arrive. Wooden piers extend into the harbor, cargo is loaded and unloaded, and the air is filled with the sounds of commerce and the sea."
+    },
+    {
+      "name": "locationType",
+      "type": "string",
+      "value": "exterior"
+    },
+    {
+      "name": "atmosphere",
+      "type": "string",
+      "value": "salt_air,sea_breeze,bustling_activity,wooden_creak,seagull_calls"
+    },
+    {
+      "name": "ambientLight",
+      "type": "string",
+      "value": "bright_daylight"
+    },
+    {
+      "name": "ambientSound",
+      "type": "string",
+      "value": "waves_lapping,ship_rigging_creak,dock_workers_shouts,seagulls,cargo_loading"
+    },
+    {
+      "name": "factionInfluence",
+      "type": "string",
+      "value": "crown,free_traders"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "Goa's harbor was the lifeline of Portuguese India. Carracks from Lisbon, dhows from Arabia, and junks from China all converged here. The harbor master's office controlled all official trade, while informal exchanges happened on the piers themselves."
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "docks_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 10,
+      "columns": 10,
+      "tiles": [
+        { "id": 0, "type": "stone_ground", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "stone" }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "depth", "type": "string", "value": "deep" }] },
+        { "id": 2, "type": "building", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "stone_wood" }] },
+        { "id": 3, "type": "pier", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "wood" }] },
+        { "id": 4, "type": "cargo_stack", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "wood_crates" }] },
+        { "id": 5, "type": "shallow_water", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "depth", "type": "string", "value": "shallow" }] },
+        { "id": 6, "type": "sand_beach", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "sand" }] },
+        { "id": 7, "type": "fishing_net", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }] },
+        { "id": 8, "type": "crane_base", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }] },
+        { "id": 9, "type": "entrance", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "transition", "type": "bool", "value": true }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 35,
+      "height": 20,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ]
+    },
+    {
+      "id": 2,
+      "name": "piers",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 35,
+      "height": 20,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ]
+    },
+    {
+      "id": 3,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 544,
+          "y": 288,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" },
+            { "name": "facing", "type": "string", "value": "south" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "harbor_master",
+          "type": "npc",
+          "x": 192,
+          "y": 256,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Capitão João de Sousa - Harbor Master" },
+            { "name": "npcId", "type": "string", "value": "joao_harbor_master" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "factionRank", "type": "string", "value": "harbor_master" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_harbor_master" },
+            { "name": "services", "type": "string", "value": "ship_registration,berth_rental,trade_permits,arrival_schedules" },
+            { "name": "personality", "type": "string", "value": "A stern Portuguese official who controls all harbor operations. He keeps meticulous records of every ship, every cargo, and every fee. His office overlooks the entire waterfront." },
+            { "name": "questGiver", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "portuguese_sailor_1",
+          "type": "npc",
+          "x": 416,
+          "y": 128,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "Pedro - Carrack Sailor" },
+            { "name": "npcId", "type": "string", "value": "pedro_sailor" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_pedro_sailor" },
+            { "name": "personality", "type": "string", "value": "A weathered Portuguese sailor from a carrack that arrived from Lisbon. He's unloading cargo and eager to share news from Europe." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "main_pier" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "arab_sailor",
+          "type": "npc",
+          "x": 672,
+          "y": 128,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "Ahmed ibn Rashid - Dhow Captain" },
+            { "name": "npcId", "type": "string", "value": "ahmed_dhow_captain" },
+            { "name": "faction", "type": "string", "value": "free_traders" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_ahmed_captain" },
+            { "name": "services", "type": "string", "value": "passage_to_arabia,spice_trade,information" },
+            { "name": "personality", "type": "string", "value": "An experienced Arab trader who captains a dhow trading between Goa and ports in Arabia. He knows the routes and the markets." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "eastern_pier" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "indian_sailor",
+          "type": "npc",
+          "x": 864,
+          "y": 128,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "Rajesh - Coastal Trader" },
+            { "name": "npcId", "type": "string", "value": "rajesh_trader" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_rajesh" },
+            { "name": "personality", "type": "string", "value": "A local Indian sailor who trades along the Malabar Coast. He knows the local waters and can provide information about coastal settlements." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "fishing_area" }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "dock_worker_1",
+          "type": "npc",
+          "x": 480,
+          "y": 192,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_worker" },
+            { "name": "npcName", "type": "string", "value": "Manuel - Dock Worker" },
+            { "name": "npcId", "type": "string", "value": "manuel_dock_worker" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_manuel" },
+            { "name": "personality", "type": "string", "value": "A strong, sun-browned dock worker loading and unloading cargo. He knows which ships carry what and can be hired for manual labor." },
+            { "name": "activity", "type": "string", "value": "loading_cargo" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "cargo_area" }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "dock_worker_2",
+          "type": "npc",
+          "x": 608,
+          "y": 192,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_worker" },
+            { "name": "npcName", "type": "string", "value": "Vikram - Dock Worker" },
+            { "name": "npcId", "type": "string", "value": "vikram_dock_worker" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_vikram" },
+            { "name": "personality", "type": "string", "value": "An Indian dock worker who helps load and unload ships. He's friendly and knows the daily rhythms of the harbor." },
+            { "name": "activity", "type": "string", "value": "unloading_cargo" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "cargo_area" }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "fisherman_1",
+          "type": "npc",
+          "x": 992,
+          "y": 256,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_fisherman" },
+            { "name": "npcName", "type": "string", "value": "Krishna - Fisherman" },
+            { "name": "npcId", "type": "string", "value": "krishna_fisherman" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "morning,day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_krishna" },
+            { "name": "services", "type": "string", "value": "fresh_fish,local_news" },
+            { "name": "personality", "type": "string", "value": "A local fisherman who casts his nets from the eastern end of the docks. He sells fresh fish and knows the comings and goings of the harbor." },
+            { "name": "activity", "type": "string", "value": "fishing" }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "fisherman_2",
+          "type": "npc",
+          "x": 1056,
+          "y": 256,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_fisherman" },
+            { "name": "npcName", "type": "string", "value": "Ramesh - Fisherman" },
+            { "name": "npcId", "type": "string", "value": "ramesh_fisherman" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "morning,day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_ramesh" },
+            { "name": "personality", "type": "string", "value": "Another local fisherman working alongside Krishna. He repairs nets and talks about the sea." },
+            { "name": "activity", "type": "string", "value": "repairing_nets" }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "ship_captain_portuguese",
+          "type": "npc",
+          "x": 352,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_captain" },
+            { "name": "npcName", "type": "string", "value": "Capitão António Mendes - Carrack Captain" },
+            { "name": "npcId", "type": "string", "value": "antonio_captain" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_captain_antonio" },
+            { "name": "services", "type": "string", "value": "passage_to_lisbon,cargo_transport" },
+            { "name": "personality", "type": "string", "value": "A Portuguese carrack captain who commands one of the great ships that ply the route between Goa and Lisbon. He's a veteran of the Cape route." },
+            { "name": "questGiver", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "exit_to_ribeira_grande",
+          "type": "transition",
+          "x": 480,
+          "y": 304,
+          "width": 96,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira_grande" },
+            { "name": "targetSpawn", "type": "string", "value": "docks_entrance" },
+            { "name": "transitionType", "type": "string", "value": "path" },
+            { "name": "prompt", "type": "string", "value": "Enter Ribeira Grande" }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "exit_to_warehouse_district",
+          "type": "transition",
+          "x": 160,
+          "y": 272,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "warehouse_district" },
+            { "name": "targetSpawn", "type": "string", "value": "docks_entrance" },
+            { "name": "transitionType", "type": "string", "value": "path" },
+            { "name": "prompt", "type": "string", "value": "Enter Warehouse District" }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "exit_to_tavern",
+          "type": "transition",
+          "x": 800,
+          "y": 272,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "tavern" },
+            { "name": "targetSpawn", "type": "string", "value": "docks_entrance" },
+            { "name": "transitionType", "type": "string", "value": "door" },
+            { "name": "prompt", "type": "string", "value": "Enter A Nau Tavern" }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "carrack_ship",
+          "type": "ship",
+          "x": 320,
+          "y": 64,
+          "width": 128,
+          "height": 64,
+          "properties": [
+            { "name": "shipType", "type": "string", "value": "carrack" },
+            { "name": "shipName", "type": "string", "value": "Nossa Senhora da Conceição" },
+            { "name": "origin", "type": "string", "value": "Lisbon" },
+            { "name": "cargo", "type": "string", "value": "wine,olive_oil,weapons" },
+            { "name": "interactive", "type": "bool", "value": true },
+            { "name": "description", "type": "string", "value": "A massive Portuguese carrack, one of the great ships that make the perilous journey around the Cape of Good Hope. Its sails are furled and cargo is being unloaded." }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "dhow_ship",
+          "type": "ship",
+          "x": 640,
+          "y": 64,
+          "width": 96,
+          "height": 48,
+          "properties": [
+            { "name": "shipType", "type": "string", "value": "dhow" },
+            { "name": "shipName", "type": "string", "value": "Al-Bahr" },
+            { "name": "origin", "type": "string", "value": "Muscat" },
+            { "name": "cargo", "type": "string", "value": "dates,incense,pearls" },
+            { "name": "interactive", "type": "bool", "value": true },
+            { "name": "description", "type": "string", "value": "An Arab dhow with its distinctive triangular lateen sails. These ships are masters of the monsoon winds, trading between Arabia and India." }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "coastal_junk",
+          "type": "ship",
+          "x": 832,
+          "y": 64,
+          "width": 96,
+          "height": 48,
+          "properties": [
+            { "name": "shipType", "type": "string", "value": "junk" },
+            { "name": "shipName", "type": "string", "value": "Monsoon Star" },
+            { "name": "origin", "type": "string", "value": "Malabar Coast" },
+            { "name": "cargo", "type": "string", "value": "rice,coconuts,spices" },
+            { "name": "interactive", "type": "bool", "value": true },
+            { "name": "description", "type": "string", "value": "A local coastal trading vessel, smaller than the great carracks but perfectly suited for regional trade along the Indian coast." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 20,
+          "name": "harbor_master_office",
+          "type": "zone",
+          "x": 128,
+          "y": 224,
+          "width": 128,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Harbor Master's Office" },
+            { "name": "description", "type": "string", "value": "A two-story stone building overlooking the harbor. The harbor master conducts all official business here - ship registration, berth assignments, and trade permits." },
+            { "name": "factionTerritory", "type": "string", "value": "crown" },
+            { "name": "restricted", "type": "bool", "value": false }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "main_pier",
+          "type": "zone",
+          "x": 320,
+          "y": 64,
+          "width": 192,
+          "height": 96,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Main Pier" },
+            { "name": "description", "type": "string", "value": "The primary pier where the largest ships dock. Currently occupied by a Portuguese carrack unloading cargo from Lisbon." },
+            { "name": "shipArrivalZone", "type": "bool", "value": true },
+            { "name": "shipType", "type": "string", "value": "carrack" }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "eastern_pier",
+          "type": "zone",
+          "x": 608,
+          "y": 64,
+          "width": 160,
+          "height": 96,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Eastern Pier" },
+            { "name": "description", "type": "string", "value": "A smaller pier where Arab dhows and regional traders dock. The air smells of incense and spices." },
+            { "name": "shipArrivalZone", "type": "bool", "value": true },
+            { "name": "shipType", "type": "string", "value": "dhow,junk" }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "cargo_area",
+          "type": "zone",
+          "x": 416,
+          "y": 160,
+          "width": 256,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Cargo Storage Area" },
+            { "name": "description", "type": "string", "value": "Stacks of crates, barrels, and bales waiting to be loaded onto ships or transported to warehouses. Dock workers move constantly between ships and storage." },
+            { "name": "interactive", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "fishing_area",
+          "type": "zone",
+          "x": 960,
+          "y": 224,
+          "width": 160,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Fishing Area" },
+            { "name": "description", "type": "string", "value": "The eastern end of the docks where local fishermen cast their nets and repair their gear. Small fishing boats are moored here." },
+            { "name": "activity", "type": "string", "value": "fishing" }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "waterfront_promenade",
+          "type": "zone",
+          "x": 160,
+          "y": 288,
+          "width": 704,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Waterfront Promenade" },
+            { "name": "description", "type": "string", "value": "The main path along the waterfront, connecting the harbor master's office to the rest of Ribeira Grande. Merchants, officials, and travelers pass through here constantly." },
+            { "name": "transitionPoint", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "ship_arrival_zone_main",
+          "type": "zone",
+          "x": 320,
+          "y": 32,
+          "width": 192,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Ship Arrival Zone - Main" },
+            { "name": "description", "type": "string", "value": "The deep water area where large carracks from Portugal arrive. Ships anchor here before moving to the pier." },
+            { "name": "eventTrigger", "type": "string", "value": "ship_arrival" },
+            { "name": "shipTypes", "type": "string", "value": "carrack" }
+          ]
+        },
+        {
+          "id": 27,
+          "name": "ship_arrival_zone_east",
+          "type": "zone",
+          "x": 608,
+          "y": 32,
+          "width": 320,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Ship Arrival Zone - Eastern" },
+            { "name": "description", "type": "string", "value": "The arrival area for dhows from Arabia and junks from regional ports. These ships arrive with the monsoon winds." },
+            { "name": "eventTrigger", "type": "string", "value": "ship_arrival" },
+            { "name": "shipTypes", "type": "string", "value": "dhow,junk" }
+          ]
+        },
+        {
+          "id": 28,
+          "name": "water_collision",
+          "type": "zone",
+          "x": 0,
+          "y": 0,
+          "width": 1120,
+          "height": 320,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Water - Non-Walkable" },
+            { "name": "description", "type": "string", "value": "Deep harbor water. Falling in would require swimming or rescue." },
+            { "name": "walkable", "type": "bool", "value": false },
+            { "name": "hazard", "type": "string", "value": "drowning" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "lighting",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 30,
+          "name": "harbor_master_lamp",
+          "type": "light",
+          "x": 192,
+          "y": 256,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "oil_lamp" },
+            { "name": "radius", "type": "int", "value": 64 },
+            { "name": "color", "type": "string", "value": "#FFD700" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.7 },
+            { "name": "schedule", "type": "string", "value": "evening,night" }
+          ]
+        },
+        {
+          "id": 31,
+          "name": "pier_lantern_1",
+          "type": "light",
+          "x": 416,
+          "y": 128,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "lantern" },
+            { "name": "radius", "type": "int", "value": 48 },
+            { "name": "color", "type": "string", "value": "#FFB347" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.6 },
+            { "name": "schedule", "type": "string", "value": "evening,night" }
+          ]
+        },
+        {
+          "id": 32,
+          "name": "pier_lantern_2",
+          "type": "light",
+          "x": 672,
+          "y": 128,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            { "name": "lightType", "type": "string", "value": "lantern" },
+            { "name": "radius", "type": "int", "value": 48 },
+            { "name": "color", "type": "string", "value": "#FFB347" },
+            { "name": "flicker", "type": "bool", "value": true },
+            { "name": "intensity", "type": "float", "value": 0.6 },
+            { "name": "schedule", "type": "string", "value": "evening,night" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "effects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 40,
+          "name": "water_ripples",
+          "type": "effect",
+          "x": 0,
+          "y": 0,
+          "width": 1120,
+          "height": 320,
+          "properties": [
+            { "name": "effectType", "type": "string", "value": "water_ripples" },
+            { "name": "density", "type": "float", "value": 0.3 },
+            { "name": "color", "type": "string", "value": "#4A90E2" },
+            { "name": "animation", "type": "string", "value": "gentle_waves" }
+          ]
+        },
+        {
+          "id": 41,
+          "name": "seagulls",
+          "type": "effect",
+          "x": 0,
+          "y": 0,
+          "width": 1120,
+          "height": 320,
+          "properties": [
+            { "name": "effectType", "type": "string", "value": "seagulls" },
+            { "name": "particleCount", "type": "int", "value": 5 },
+            { "name": "animation", "type": "string", "value": "flying_circling" },
+            { "name": "sound", "type": "string", "value": "seagull_calls" }
+          ]
+        },
+        {
+          "id": 42,
+          "name": "ship_rigging_sway",
+          "type": "effect",
+          "x": 320,
+          "y": 64,
+          "width": 608,
+          "height": 64,
+          "properties": [
+            { "name": "effectType", "type": "string", "value": "rigging_sway" },
+            { "name": "animation", "type": "string", "value": "gentle_sway" },
+            { "name": "sound", "type": "string", "value": "rope_creak" }
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_ribeira_grande",
+      "targetLocation": "ribeira_grande",
+      "targetSpawn": "docks_entrance",
+      "transitionType": "path",
+      "description": "The main path leading from the docks into the streets of Ribeira Grande."
+    },
+    {
+      "id": "conn_warehouse_district",
+      "targetLocation": "warehouse_district",
+      "targetSpawn": "docks_entrance",
+      "transitionType": "path",
+      "description": "A path leading to the warehouse district where cargo is stored."
+    },
+    {
+      "id": "conn_tavern",
+      "targetLocation": "tavern",
+      "targetSpawn": "docks_entrance",
+      "transitionType": "door",
+      "description": "A tavern frequented by sailors and dock workers, located near the waterfront.",
+      "preferredTime": ["evening", "night"]
+    }
+  ],
+  "schedule": {
+    "morning": {
+      "activity": "busy",
+      "npcsPresent": ["joao_harbor_master", "krishna_fisherman", "ramesh_fisherman", "manuel_dock_worker", "vikram_dock_worker"],
+      "description": "The docks come alive at dawn. Fishermen return with their catch, dock workers begin unloading ships that arrived overnight, and the harbor master opens his office."
+    },
+    "afternoon": {
+      "activity": "very_busy",
+      "npcsPresent": ["joao_harbor_master", "pedro_sailor", "ahmed_dhow_captain", "rajesh_trader", "antonio_captain", "manuel_dock_worker", "vikram_dock_worker"],
+      "description": "Peak activity. Ships arrive and depart, cargo is loaded and unloaded, merchants negotiate, and the harbor master's office is crowded with traders seeking permits."
+    },
+    "evening": {
+      "activity": "moderate",
+      "npcsPresent": ["joao_harbor_master", "pedro_sailor", "ahmed_dhow_captain", "rajesh_trader", "antonio_captain"],
+      "description": "As the sun sets, most dock workers finish for the day. Sailors gather, ships prepare for departure with the tide, and lanterns are lit along the piers."
+    },
+    "night": {
+      "activity": "quiet",
+      "npcsPresent": ["joao_harbor_master"],
+      "description": "The docks grow quiet. Only essential personnel remain. Ships rock gently at anchor, their lanterns casting flickering light on the water. The harbor master keeps a watchful eye from his office."
+    }
+  }
+}

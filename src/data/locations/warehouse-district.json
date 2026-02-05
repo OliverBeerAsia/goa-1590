@@ -1,0 +1,655 @@
+{
+  "compressionlevel": -1,
+  "height": 25,
+  "width": 30,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "warehouse_district"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "Warehouse District"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "value": "A bustling commercial storage area near the docks where bulk goods are stored, weighed, and prepared for trade. Large warehouses line the cart paths, and the air is filled with the sounds of labor and commerce."
+    },
+    {
+      "name": "locationType",
+      "type": "string",
+      "value": "exterior"
+    },
+    {
+      "name": "atmosphere",
+      "type": "string",
+      "value": "dusty, bustling, industrious, commercial"
+    },
+    {
+      "name": "ambientLight",
+      "type": "string",
+      "value": "bright_daylight"
+    },
+    {
+      "name": "ambientSound",
+      "type": "string",
+      "value": "cart_wheels, labor_shouts, crate_dragging, weighing_scales"
+    },
+    {
+      "name": "factionInfluence",
+      "type": "string",
+      "value": "crown,merchants"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "The warehouse district was the commercial heart of Portuguese Goa, where spices, textiles, and other valuable goods were stored before distribution. Warehouse masters held considerable power, controlling access to goods and information about shipments."
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "warehouse_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 12,
+      "columns": 12,
+      "tiles": [
+        { "id": 0, "type": "dirt_path", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "packed_dirt" }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "warehouse_wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "stone_plaster" }] },
+        { "id": 3, "type": "warehouse_roof", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "tile" }] },
+        { "id": 4, "type": "loading_bay", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "stone" }, { "name": "interactive", "type": "bool", "value": true }] },
+        { "id": 5, "type": "storage_yard", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "packed_dirt" }] },
+        { "id": 6, "type": "cart_path", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "stone" }] },
+        { "id": 7, "type": "weighing_station", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "interactive", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "stone" }] },
+        { "id": 8, "type": "guard_post", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "material", "type": "string", "value": "wood" }] },
+        { "id": 9, "type": "crate_stack", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "wood" }] },
+        { "id": 10, "type": "warehouse_door", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "interactive", "type": "bool", "value": true }, { "name": "transition", "type": "bool", "value": false }] },
+        { "id": 11, "type": "office_building", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "material", "type": "string", "value": "stone_plaster" }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 30,
+      "height": 25,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2,
+        2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2,
+        2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2,
+        2, 2, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "name": "buildings",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 30,
+      "height": 25,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0,
+        0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0,
+        0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ]
+    },
+    {
+      "id": 3,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 480,
+          "y": 384,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" },
+            { "name": "facing", "type": "string", "value": "north" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "warehouse_master_silva",
+          "type": "npc",
+          "x": 192,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_warehouse_master" },
+            { "name": "npcName", "type": "string", "value": "João Silva - Warehouse Master" },
+            { "name": "npcId", "type": "string", "value": "joao_silva_warehouse" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_joao_silva" },
+            { "name": "services", "type": "string", "value": "storage,goods_inspection,trade_info" },
+            { "name": "personality", "type": "string", "value": "A stern Portuguese warehouse master who has managed storage operations for the Crown for over a decade. He knows every crate, every manifest, and every merchant who passes through." }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "warehouse_master_ahmed",
+          "type": "npc",
+          "x": 704,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_warehouse_master" },
+            { "name": "npcName", "type": "string", "value": "Ahmed ibn Hassan - Warehouse Master" },
+            { "name": "npcId", "type": "string", "value": "ahmed_warehouse" },
+            { "name": "faction", "type": "string", "value": "merchants" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_ahmed_warehouse" },
+            { "name": "services", "type": "string", "value": "storage,goods_inspection,trade_info" },
+            { "name": "personality", "type": "string", "value": "An experienced Arab merchant who manages a private warehouse. He deals with both legitimate trade and discreet transactions, and knows the value of discretion." }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "bookkeeper_mendes",
+          "type": "npc",
+          "x": 448,
+          "y": 64,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_bookkeeper" },
+            { "name": "npcName", "type": "string", "value": "Pedro Mendes - Bookkeeper" },
+            { "name": "npcId", "type": "string", "value": "pedro_mendes_bookkeeper" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "schedule", "type": "string", "value": "day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_pedro_mendes" },
+            { "name": "services", "type": "string", "value": "ledger_access,accounting,trade_records" },
+            { "name": "personality", "type": "string", "value": "A meticulous clerk who maintains the warehouse ledgers. He knows who has stored what, when, and for how long. His records are impeccable, but he can be persuaded to share information for the right price." }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "guard_rodrigues",
+          "type": "npc",
+          "x": 128,
+          "y": 160,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_guard" },
+            { "name": "npcName", "type": "string", "value": "Guard Rodrigues" },
+            { "name": "npcId", "type": "string", "value": "rodrigues_warehouse_guard" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_rodrigues_warehouse" },
+            { "name": "personality", "type": "string", "value": "A Crown guard posted at the warehouse district. He watches for thieves and unauthorized access, but can be distracted with conversation or coin." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "north_warehouse_area" }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "guard_santos",
+          "type": "npc",
+          "x": 768,
+          "y": 160,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_guard" },
+            { "name": "npcName", "type": "string", "value": "Guard Santos" },
+            { "name": "npcId", "type": "string", "value": "santos_warehouse_guard" },
+            { "name": "faction", "type": "string", "value": "crown" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_santos_warehouse" },
+            { "name": "personality", "type": "string", "value": "Another Crown guard patrolling the southern warehouses. Less talkative than Rodrigues, but equally watchful." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "south_warehouse_area" }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "porter_ramesh",
+          "type": "npc",
+          "x": 256,
+          "y": 240,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_laborer" },
+            { "name": "npcName", "type": "string", "value": "Ramesh - Porter" },
+            { "name": "npcId", "type": "string", "value": "ramesh_porter" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_ramesh_porter" },
+            { "name": "personality", "type": "string", "value": "A hardworking local laborer who loads and unloads cargo. He knows which warehouses store what goods and can provide useful information about shipments." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "loading_area_north" },
+            { "name": "activity", "type": "string", "value": "loading_crates" }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "porter_krishna",
+          "type": "npc",
+          "x": 640,
+          "y": 240,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_laborer" },
+            { "name": "npcName", "type": "string", "value": "Krishna - Porter" },
+            { "name": "npcId", "type": "string", "value": "krishna_porter" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_krishna_porter" },
+            { "name": "personality", "type": "string", "value": "Another porter working the loading bays. He's friendly and always willing to share gossip about the merchants and their cargo." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "loading_area_south" },
+            { "name": "activity", "type": "string", "value": "loading_crates" }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "merchant_inspector",
+          "type": "npc",
+          "x": 384,
+          "y": 192,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_merchant" },
+            { "name": "npcName", "type": "string", "value": "Vasco de Almeida - Merchant Inspector" },
+            { "name": "npcId", "type": "string", "value": "vasco_merchant_inspector" },
+            { "name": "faction", "type": "string", "value": "merchants" },
+            { "name": "schedule", "type": "string", "value": "day" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_vasco_inspector" },
+            { "name": "personality", "type": "string", "value": "A Portuguese merchant inspecting goods before purchase. He's knowledgeable about quality and market prices, and can provide valuable trading information." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "weighing_station_area" }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "merchant_arab",
+          "type": "npc",
+          "x": 576,
+          "y": 192,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_merchant" },
+            { "name": "npcName", "type": "string", "value": "Ibrahim al-Mansur - Arab Merchant" },
+            { "name": "npcId", "type": "string", "value": "ibrahim_merchant" },
+            { "name": "faction", "type": "string", "value": "merchants" },
+            { "name": "schedule", "type": "string", "value": "day,evening" },
+            { "name": "dialogue", "type": "string", "value": "dialogue_ibrahim_merchant" },
+            { "name": "personality", "type": "string", "value": "An Arab merchant examining textiles and spices. He has connections throughout the Indian Ocean trade network and knows about upcoming shipments." },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "storage_yard_area" }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "exit_to_ribeira_grande",
+          "type": "transition",
+          "x": 416,
+          "y": 384,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira_grande" },
+            { "name": "targetSpawn", "type": "string", "value": "warehouse_district_entrance" },
+            { "name": "transitionType", "type": "string", "value": "path" },
+            { "name": "prompt", "type": "string", "value": "To Ribeira Grande" }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "exit_to_docks",
+          "type": "transition",
+          "x": 160,
+          "y": 128,
+          "width": 32,
+          "height": 64,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "docks" },
+            { "name": "targetSpawn", "type": "string", "value": "warehouse_district_entrance" },
+            { "name": "transitionType", "type": "string", "value": "path" },
+            { "name": "prompt", "type": "string", "value": "To the Docks" }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "exit_to_alfandega",
+          "type": "transition",
+          "x": 800,
+          "y": 128,
+          "width": 32,
+          "height": 64,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "alfandega" },
+            { "name": "targetSpawn", "type": "string", "value": "warehouse_district_entrance" },
+            { "name": "transitionType", "type": "string", "value": "path" },
+            { "name": "prompt", "type": "string", "value": "To the Customs House" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 20,
+          "name": "north_warehouse_area",
+          "type": "zone",
+          "x": 64,
+          "y": 32,
+          "width": 320,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "North Warehouse Complex" },
+            { "name": "description", "type": "string", "value": "Large stone warehouses storing Crown goods. Guards patrol the perimeter, and warehouse masters oversee operations from their offices." }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "south_warehouse_area",
+          "type": "zone",
+          "x": 576,
+          "y": 32,
+          "width": 320,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "South Warehouse Complex" },
+            { "name": "description", "type": "string", "value": "Private merchant warehouses. These buildings store goods for various trading companies and independent merchants." }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "loading_area_north",
+          "type": "zone",
+          "x": 96,
+          "y": 192,
+          "width": 192,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "North Loading Bay" },
+            { "name": "description", "type": "string", "value": "A busy loading area where porters move crates and bales between carts and warehouses. The ground is packed dirt, rutted by countless cart wheels." }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "loading_area_south",
+          "type": "zone",
+          "x": 608,
+          "y": 192,
+          "width": 192,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "South Loading Bay" },
+            { "name": "description", "type": "string", "value": "Another active loading area. Merchants inspect goods here before accepting delivery, checking quality and quantity." }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "weighing_station_area",
+          "type": "zone",
+          "x": 320,
+          "y": 160,
+          "width": 160,
+          "height": 64,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Weighing Station" },
+            { "name": "description", "type": "string", "value": "A central weighing station where goods are measured before storage or transport. Large scales and weights are used to determine exact quantities for trade." },
+            { "name": "interactive", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "storage_yard_area",
+          "type": "zone",
+          "x": 96,
+          "y": 256,
+          "width": 704,
+          "height": 96,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Storage Yards" },
+            { "name": "description", "type": "string", "value": "Open storage yards where goods are temporarily held before being moved into warehouses. Crates, barrels, and bales are stacked in organized rows." }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "cart_path_main",
+          "type": "zone",
+          "x": 160,
+          "y": 128,
+          "width": 640,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Main Cart Path" },
+            { "name": "description", "type": "string", "value": "The main thoroughfare through the warehouse district. Heavy carts loaded with goods rumble along this stone-paved road." }
+          ]
+        },
+        {
+          "id": 27,
+          "name": "guard_post_north",
+          "type": "zone",
+          "x": 128,
+          "y": 144,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "North Guard Post" },
+            { "name": "description", "type": "string", "value": "A small guard post where Crown guards monitor access to the northern warehouses." }
+          ]
+        },
+        {
+          "id": 28,
+          "name": "guard_post_south",
+          "type": "zone",
+          "x": 768,
+          "y": 144,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "South Guard Post" },
+            { "name": "description", "type": "string", "value": "Another guard post watching over the southern warehouse complex." }
+          ]
+        },
+        {
+          "id": 29,
+          "name": "bookkeeper_office",
+          "type": "zone",
+          "x": 416,
+          "y": 48,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Bookkeeper's Office" },
+            { "name": "description", "type": "string", "value": "A small office building where warehouse records are maintained. The bookkeeper works here, surrounded by ledgers and manifests." }
+          ]
+        },
+        {
+          "id": 30,
+          "name": "entrance_area",
+          "type": "zone",
+          "x": 416,
+          "y": 368,
+          "width": 64,
+          "height": 48,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "District Entrance" },
+            { "name": "description", "type": "string", "value": "The main entrance to the warehouse district, connecting to Ribeira Grande and the rest of Goa." },
+            { "name": "transitionPoint", "type": "bool", "value": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "collision",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 40,
+          "name": "north_warehouse_collision",
+          "type": "collision",
+          "x": 64,
+          "y": 32,
+          "width": 320,
+          "height": 128,
+          "properties": [
+            { "name": "collisionType", "type": "string", "value": "building" }
+          ]
+        },
+        {
+          "id": 41,
+          "name": "south_warehouse_collision",
+          "type": "collision",
+          "x": 576,
+          "y": 32,
+          "width": 320,
+          "height": 128,
+          "properties": [
+            { "name": "collisionType", "type": "string", "value": "building" }
+          ]
+        },
+        {
+          "id": 42,
+          "name": "bookkeeper_office_collision",
+          "type": "collision",
+          "x": 416,
+          "y": 48,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "collisionType", "type": "string", "value": "building" }
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_ribeira_grande",
+      "targetLocation": "ribeira_grande",
+      "targetSpawn": "warehouse_district_entrance",
+      "transitionType": "path",
+      "description": "Return to the main market area of Ribeira Grande"
+    },
+    {
+      "id": "conn_docks",
+      "targetLocation": "docks",
+      "targetSpawn": "warehouse_district_entrance",
+      "transitionType": "path",
+      "description": "Head to the docks where ships unload their cargo"
+    },
+    {
+      "id": "conn_alfandega",
+      "targetLocation": "alfandega",
+      "targetSpawn": "warehouse_district_entrance",
+      "transitionType": "path",
+      "description": "Go to the Customs House to process trade documents"
+    }
+  ],
+  "schedule": {
+    "morning": {
+      "activity": "busy",
+      "npcsPresent": ["joao_silva_warehouse", "ahmed_warehouse", "pedro_mendes_bookkeeper", "rodrigues_warehouse_guard", "santos_warehouse_guard", "ramesh_porter", "krishna_porter", "vasco_merchant_inspector", "ibrahim_merchant"],
+      "description": "The warehouse district is bustling with activity. Ships have arrived overnight, and porters work frantically to unload cargo before the heat of midday."
+    },
+    "afternoon": {
+      "activity": "very_busy",
+      "npcsPresent": ["joao_silva_warehouse", "ahmed_warehouse", "pedro_mendes_bookkeeper", "rodrigues_warehouse_guard", "santos_warehouse_guard", "ramesh_porter", "krishna_porter", "vasco_merchant_inspector", "ibrahim_merchant"],
+      "description": "Peak trading hours. Merchants inspect goods, warehouse masters negotiate storage fees, and carts rumble constantly along the paths."
+    },
+    "evening": {
+      "activity": "moderate",
+      "npcsPresent": ["joao_silva_warehouse", "ahmed_warehouse", "rodrigues_warehouse_guard", "santos_warehouse_guard", "ramesh_porter", "krishna_porter"],
+      "description": "Activity slows as the day ends. Most merchants have left, but warehouse masters remain to oversee final operations. Guards begin their evening patrols."
+    },
+    "night": {
+      "activity": "quiet",
+      "npcsPresent": ["rodrigues_warehouse_guard", "santos_warehouse_guard"],
+      "description": "The warehouses are locked and secured. Only guards patrol the district, watching for thieves and unauthorized access. The district is dimly lit by oil lamps."
+    }
+  }
+}

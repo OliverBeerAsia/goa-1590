@@ -1,0 +1,446 @@
+{
+  "compressionlevel": -1,
+  "height": 25,
+  "width": 25,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "id",
+      "type": "string",
+      "value": "old_quarter"
+    },
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "Old Quarter"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "value": "A mixed residential quarter where Portuguese colonists and local Goan families live side by side. Winding streets connect modest houses, small shrines, and craftsman workshops."
+    },
+    {
+      "name": "locationType",
+      "type": "string",
+      "value": "exterior"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "The Old Quarter represents the everyday life of Goa - a blend of Portuguese colonial architecture and traditional Goan homes. Here, the boundaries between colonizer and colonized blur in the shared spaces of daily life."
+    },
+    {
+      "name": "atmosphere",
+      "type": "string",
+      "value": "domestic,communal,aromatic_spices,children_laughter,craftsman_hammers"
+    },
+    {
+      "name": "ambientSounds",
+      "type": "string",
+      "value": "street_chatter,workshop_clatter,chapel_bells,children_playing"
+    },
+    {
+      "name": "factionInfluence",
+      "type": "string",
+      "value": "mixed"
+    }
+  ],
+  "connections": [
+    {
+      "id": "to_ribeira_grande",
+      "target": "ribeira_grande",
+      "x": 0,
+      "y": 12,
+      "direction": "west",
+      "description": "To Ribeira Grande"
+    },
+    {
+      "id": "to_se_cathedral",
+      "target": "se_cathedral",
+      "x": 12,
+      "y": 0,
+      "direction": "north",
+      "description": "To Sé Cathedral"
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "old_quarter_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 12,
+      "columns": 12,
+      "tiles": [
+        { "id": 0, "type": "dirt_path", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Worn dirt path between houses" }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "house_wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Modest residential building" }] },
+        { "id": 3, "type": "stone_floor", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Stone-paved courtyard" }] },
+        { "id": 4, "type": "market_stall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Small market stall selling local goods" }] },
+        { "id": 5, "type": "workshop", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Craftsman's workshop" }] },
+        { "id": 6, "type": "chapel_wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Small neighborhood chapel" }] },
+        { "id": 7, "type": "shrine", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Small Hindu shrine" }] },
+        { "id": 8, "type": "tree", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Mango or coconut tree providing shade" }] },
+        { "id": 9, "type": "well", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "interactive", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Community well" }] },
+        { "id": 10, "type": "garden", "properties": [{ "name": "walkable", "type": "bool", "value": true }, { "name": "description", "type": "string", "value": "Small vegetable garden" }] },
+        { "id": 11, "type": "wall", "properties": [{ "name": "walkable", "type": "bool", "value": false }, { "name": "description", "type": "string", "value": "Boundary wall" }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 25,
+      "height": 25,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+        11, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 11,
+        11, 2, 2, 2, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 2, 2, 2, 2, 2, 11,
+        11, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 4, 4, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 9, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 11,
+        11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11
+      ]
+    },
+    {
+      "id": 2,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 400,
+          "y": 200,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" },
+            { "name": "spawnDirection", "type": "string", "value": "south" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "neighborhood_elder",
+          "type": "npc",
+          "x": 320,
+          "y": 160,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_elder_ramesh" },
+            { "name": "npcType", "type": "string", "value": "npc_elder" },
+            { "name": "npcName", "type": "string", "value": "Ramesh - Neighborhood Elder" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "description", "type": "string", "value": "An elderly Goan man who has lived in this quarter for decades. He knows everyone's business and serves as an informal mediator for disputes." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_elder_ramesh" },
+            { "name": "schedule", "type": "string", "value": "morning,afternoon,evening" },
+            { "name": "goods", "type": "string", "value": "" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "central_courtyard" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "potter_craftsman",
+          "type": "npc",
+          "x": 160,
+          "y": 240,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_potter_vasco" },
+            { "name": "npcType", "type": "string", "value": "npc_craftsman" },
+            { "name": "npcName", "type": "string", "value": "Vasco - Potter" },
+            { "name": "faction", "type": "string", "value": "artisan" },
+            { "name": "description", "type": "string", "value": "A Portuguese potter who learned local techniques. His workshop produces both European-style ceramics and traditional Goan pottery." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_potter_vasco" },
+            { "name": "schedule", "type": "string", "value": "morning,afternoon" },
+            { "name": "goods", "type": "string", "value": "pottery,ceramics" },
+            { "name": "services", "type": "string", "value": "crafting,repairs" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "weaver_craftsman",
+          "type": "npc",
+          "x": 480,
+          "y": 320,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_weaver_lakshmi" },
+            { "name": "npcType", "type": "string", "value": "npc_craftsman" },
+            { "name": "npcName", "type": "string", "value": "Lakshmi - Weaver" },
+            { "name": "faction", "type": "string", "value": "artisan" },
+            { "name": "description", "type": "string", "value": "A skilled Goan weaver who creates beautiful textiles blending Portuguese and Indian patterns. Her workshop is always filled with colorful threads." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_weaver_lakshmi" },
+            { "name": "schedule", "type": "string", "value": "morning,afternoon" },
+            { "name": "goods", "type": "string", "value": "textiles,fabric,clothing" },
+            { "name": "services", "type": "string", "value": "weaving,clothing_repair" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "market_vendor",
+          "type": "npc",
+          "x": 96,
+          "y": 128,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_vendor_ana" },
+            { "name": "npcType", "type": "string", "value": "npc_vendor" },
+            { "name": "npcName", "type": "string", "value": "Ana - Market Vendor" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "description", "type": "string", "value": "A Portuguese woman who runs a small stall selling fresh produce, spices, and everyday necessities to the neighborhood." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_vendor_ana" },
+            { "name": "schedule", "type": "string", "value": "morning,afternoon" },
+            { "name": "goods", "type": "string", "value": "produce,spices,basic_supplies" },
+            { "name": "wandering", "type": "bool", "value": false }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "local_resident_1",
+          "type": "npc",
+          "x": 224,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_resident_joao" },
+            { "name": "npcType", "type": "string", "value": "npc_resident" },
+            { "name": "npcName", "type": "string", "value": "João - Local Resident" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "description", "type": "string", "value": "A Portuguese colonist who has made Goa his home. He speaks Konkani fluently and has married a local woman." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_resident_joao" },
+            { "name": "schedule", "type": "string", "value": "morning,evening" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "residential_area_north" }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "local_resident_2",
+          "type": "npc",
+          "x": 544,
+          "y": 96,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_resident_priya" },
+            { "name": "npcType", "type": "string", "value": "npc_resident" },
+            { "name": "npcName", "type": "string", "value": "Priya - Local Resident" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "description", "type": "string", "value": "A Goan woman who runs a small household. She knows all the neighborhood gossip and can point you to anyone you need to find." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_resident_priya" },
+            { "name": "schedule", "type": "string", "value": "morning,afternoon" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "residential_area_south" }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "children_playing",
+          "type": "npc",
+          "x": 384,
+          "y": 256,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            { "name": "npcId", "type": "string", "value": "npc_children_group" },
+            { "name": "npcType", "type": "string", "value": "npc_children" },
+            { "name": "npcName", "type": "string", "value": "Children Playing" },
+            { "name": "faction", "type": "string", "value": "neutral" },
+            { "name": "description", "type": "string", "value": "A group of mixed Portuguese and Goan children playing games in the street. They scatter when adults approach but are curious about strangers." },
+            { "name": "dialogue", "type": "string", "value": "dialogue_children" },
+            { "name": "schedule", "type": "string", "value": "afternoon,evening" },
+            { "name": "wandering", "type": "bool", "value": true },
+            { "name": "wanderZone", "type": "string", "value": "central_courtyard" },
+            { "name": "activity", "type": "string", "value": "playing" }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "exit_to_ribeira_grande",
+          "type": "transition",
+          "x": 0,
+          "y": 192,
+          "width": 32,
+          "height": 64,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "ribeira_grande" },
+            { "name": "targetSpawn", "type": "string", "value": "from_old_quarter" },
+            { "name": "transitionType", "type": "string", "value": "street" },
+            { "name": "prompt", "type": "string", "value": "To Ribeira Grande" }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "exit_to_se_cathedral",
+          "type": "transition",
+          "x": 384,
+          "y": 0,
+          "width": 64,
+          "height": 32,
+          "properties": [
+            { "name": "targetMap", "type": "string", "value": "se_cathedral" },
+            { "name": "targetSpawn", "type": "string", "value": "from_old_quarter" },
+            { "name": "transitionType", "type": "string", "value": "street" },
+            { "name": "prompt", "type": "string", "value": "To Sé Cathedral" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 20,
+          "name": "central_courtyard",
+          "type": "zone",
+          "x": 320,
+          "y": 320,
+          "width": 160,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Central Courtyard" },
+            { "name": "description", "type": "string", "value": "A stone-paved courtyard where neighbors gather. Children play here in the afternoon, and elders sit in the shade of trees to discuss neighborhood matters." }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "residential_area_north",
+          "type": "zone",
+          "x": 32,
+          "y": 32,
+          "width": 256,
+          "height": 192,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Northern Residential Area" },
+            { "name": "description", "type": "string", "value": "Modest Portuguese-style houses mixed with traditional Goan homes. The architecture reflects the blending of cultures - tiled roofs, whitewashed walls, and small courtyards." }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "residential_area_south",
+          "type": "zone",
+          "x": 32,
+          "y": 416,
+          "width": 256,
+          "height": 192,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Southern Residential Area" },
+            { "name": "description", "type": "string", "value": "More densely packed houses with narrow alleys between them. Laundry hangs from windows, and the smell of cooking fires fills the air." }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "craftsman_quarter",
+          "type": "zone",
+          "x": 32,
+          "y": 224,
+          "width": 192,
+          "height": 192,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Craftsman Quarter" },
+            { "name": "description", "type": "string", "value": "Workshops line this area - potters, weavers, carpenters, and other artisans work side by side. The sound of hammers, looms, and wheels fills the air." }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "market_area",
+          "type": "zone",
+          "x": 32,
+          "y": 96,
+          "width": 128,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Small Market" },
+            { "name": "description", "type": "string", "value": "A few small stalls where vendors sell fresh produce, spices, and everyday goods to the neighborhood residents." }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "chapel_area",
+          "type": "zone",
+          "x": 320,
+          "y": 32,
+          "width": 160,
+          "height": 128,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Neighborhood Chapel" },
+            { "name": "description", "type": "string", "value": "A small Catholic chapel serving the Portuguese residents. Its bell rings for morning and evening prayers, calling the faithful to worship." }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "shrine_area",
+          "type": "zone",
+          "x": 480,
+          "y": 416,
+          "width": 128,
+          "height": 96,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Small Shrine" },
+            { "name": "description", "type": "string", "value": "A modest Hindu shrine where local residents leave offerings. Fresh flowers and incense mark this as a place of daily devotion." }
+          ]
+        },
+        {
+          "id": 27,
+          "name": "winding_streets",
+          "type": "zone",
+          "x": 224,
+          "y": 224,
+          "width": 96,
+          "height": 96,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Winding Streets" },
+            { "name": "description", "type": "string", "value": "Narrow, winding paths that connect the different parts of the quarter. Easy to get lost if you don't know your way around." }
+          ]
+        }
+      ]
+    }
+  ]
+}

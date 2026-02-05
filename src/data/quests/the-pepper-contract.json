@@ -1,0 +1,343 @@
+{
+  "id": "quest_pepper_contract",
+  "title": "The Pepper Contract",
+  "description": "A Crown official approaches you with an opportunity to become a licensed pepper trader. This prestigious position comes with great responsibility - and great rewards. But when you discover corruption within the Crown's own ranks, you must choose between loyalty, personal gain, or finding a middle path.",
+  "faction": "crown",
+  "giver": "crown_officer",
+  "requirements": [
+    {
+      "type": "reputation",
+      "target": "crown",
+      "value": 15,
+      "comparison": "gte"
+    },
+    {
+      "type": "gold",
+      "value": 300,
+      "comparison": "gte"
+    }
+  ],
+  "timeLimit": 72,
+  "stages": [
+    {
+      "id": "stage_1_approach",
+      "objective": "Meet with Crown Trade Officer Silva at the Alfandega to discuss the pepper trading license",
+      "type": "talk",
+      "target": "crown_officer",
+      "onComplete": [
+        {
+          "type": "flag",
+          "target": "pepper_contract_offered",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_2_test",
+      "objective": "Prove your reliability by delivering 50 units of pepper to the Crown warehouse within 48 hours",
+      "type": "deliver",
+      "target": "warehouse_master",
+      "quantity": 50,
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": -750
+        },
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": -50
+        },
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": 5
+        },
+        {
+          "type": "flag",
+          "target": "pepper_test_completed",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_3_discovery",
+      "objective": "Investigate discrepancies in the warehouse ledgers - something doesn't add up",
+      "type": "talk",
+      "target": "bulk_merchant",
+      "choices": [
+        {
+          "id": "choice_investigate_thoroughly",
+          "text": "Examine the ledgers carefully and question the warehouse clerk",
+          "nextStageId": "stage_4_choice",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "pepper_discovery_method",
+              "value": "thorough"
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": 3
+            }
+          ]
+        },
+        {
+          "id": "choice_investigate_casually",
+          "text": "Casually ask around about the shipment discrepancies",
+          "nextStageId": "stage_4_choice",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "pepper_discovery_method",
+              "value": "casual"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stage_4_choice",
+      "objective": "Confront your colleague, Merchant Rodrigues, about the missing pepper. You've discovered he's been skimming 10% of each shipment for personal profit.",
+      "type": "talk",
+      "target": "luxury_merchant",
+      "choices": [
+        {
+          "id": "choice_report_loyalty",
+          "text": "Report Rodrigues to Trade Officer Silva immediately - corruption cannot be tolerated",
+          "nextStageId": "stage_5_consequences_loyalty",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": 20
+            },
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": -5
+            },
+            {
+              "type": "flag",
+              "target": "pepper_choice",
+              "value": "loyalty"
+            },
+            {
+              "type": "flag",
+              "target": "rodrigues_arrested",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "choice_cover_up",
+          "text": "Help Rodrigues cover up the theft in exchange for a share of future profits",
+          "nextStageId": "stage_5_consequences_gain",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": -15
+            },
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": 10
+            },
+            {
+              "type": "gold",
+              "value": 500
+            },
+            {
+              "type": "flag",
+              "target": "pepper_choice",
+              "value": "corruption"
+            },
+            {
+              "type": "flag",
+              "target": "rodrigues_alliance",
+              "value": true
+            }
+          ],
+          "condition": {
+            "type": "gold",
+            "value": 200,
+            "comparison": "gte"
+          }
+        },
+        {
+          "id": "choice_negotiate",
+          "text": "Negotiate a deal: Rodrigues stops skimming, you get a better commission rate, and the Crown gets honest accounting",
+          "nextStageId": "stage_5_consequences_pragmatic",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": 10
+            },
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": 5
+            },
+            {
+              "type": "gold",
+              "value": 200
+            },
+            {
+              "type": "flag",
+              "target": "pepper_choice",
+              "value": "pragmatic"
+            },
+            {
+              "type": "flag",
+              "target": "pepper_commission_increased",
+              "value": true
+            }
+          ],
+          "condition": {
+            "type": "reputation",
+            "target": "crown",
+            "value": 20,
+            "comparison": "gte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stage_5_consequences_loyalty",
+      "objective": "Meet with Trade Officer Silva to receive your reward for exposing corruption",
+      "type": "talk",
+      "target": "crown_officer",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 1500
+        },
+        {
+          "type": "item",
+          "target": "item_pepper_trading_license",
+          "value": 1
+        },
+        {
+          "type": "item",
+          "target": "item_royal_seal",
+          "value": 1
+        },
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": 30
+        },
+        {
+          "type": "flag",
+          "target": "pepper_contract_completed",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "crown_trusted_agent",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_5_consequences_gain",
+      "objective": "Meet with Rodrigues to finalize your arrangement and collect your share",
+      "type": "talk",
+      "target": "luxury_merchant",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 2000
+        },
+        {
+          "type": "item",
+          "target": "item_pepper_trading_license",
+          "value": 1
+        },
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": 30
+        },
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": 10
+        },
+        {
+          "type": "reputation",
+          "target": "free_traders",
+          "value": 15
+        },
+        {
+          "type": "flag",
+          "target": "pepper_contract_completed",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "crown_corruption_involved",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_5_consequences_pragmatic",
+      "objective": "Finalize the new arrangement with both Rodrigues and Trade Officer Silva",
+      "type": "talk",
+      "target": "crown_officer",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 1200
+        },
+        {
+          "type": "item",
+          "target": "item_pepper_trading_license",
+          "value": 1
+        },
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": 20
+        },
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": 20
+        },
+        {
+          "type": "reputation",
+          "target": "free_traders",
+          "value": 10
+        },
+        {
+          "type": "flag",
+          "target": "pepper_contract_completed",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "pepper_negotiation_success",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "target": "pepper_commission_increased",
+          "value": true
+        }
+      ]
+    }
+  ],
+  "rewards": [
+    {
+      "type": "unlock",
+      "target": "crown_licensed_trader",
+      "value": true
+    }
+  ],
+  "isRepeatable": false
+}

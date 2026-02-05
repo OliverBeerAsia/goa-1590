@@ -1,0 +1,363 @@
+{
+  "id": "quest_breaking_the_monopoly",
+  "title": "Breaking the Monopoly",
+  "description": "A major branching quest about circumventing Crown trade restrictions. A free trader approaches you about a lucrative but risky opportunity to move restricted goods past Crown inspection. Success could bring great profit and favor with the Free Traders, but failure risks everything.",
+  "faction": "free_traders",
+  "giver": "yusuf_broker",
+  "requirements": [
+    {
+      "type": "reputation",
+      "target": "free_traders",
+      "value": 15,
+      "comparison": "gte"
+    }
+  ],
+  "stages": [
+    {
+      "id": "stage_1_proposition",
+      "objective": "Meet Yusuf al-Rashid in the back room of A Nau tavern to hear his proposition",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "onComplete": [
+        {
+          "type": "flag",
+          "target": "monopoly_quest_started",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_2_network",
+      "objective": "Prove your trustworthiness by making connections with three independent traders (Captain Marques, Lakshmi, or Yusuf)",
+      "type": "talk",
+      "target": "sailor_1",
+      "quantity": 3,
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "free_traders",
+          "value": 5
+        },
+        {
+          "type": "flag",
+          "target": "monopoly_network_established",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "stage_3_shipment",
+      "objective": "Help move a shipment of restricted spices past Crown inspection at the Alfandega. Choose your method carefully.",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "choices": [
+        {
+          "id": "choice_bribe_official",
+          "text": "Bribe the customs official to look the other way",
+          "nextStageId": "stage_4_complication",
+          "effects": [
+            {
+              "type": "gold",
+              "value": -200
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": -5
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_method",
+              "value": "bribe"
+            }
+          ]
+        },
+        {
+          "id": "choice_fake_papers",
+          "text": "Use forged documents to disguise the cargo",
+          "nextStageId": "stage_4_complication",
+          "effects": [
+            {
+              "type": "gold",
+              "value": -150
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_method",
+              "value": "forgery"
+            }
+          ],
+          "condition": {
+            "type": "gold",
+            "value": 150,
+            "comparison": "gte"
+          }
+        },
+        {
+          "id": "choice_smuggle_route",
+          "text": "Use a secret smuggling route to bypass the Alfandega entirely",
+          "nextStageId": "stage_4_complication",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": 10
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_method",
+              "value": "smuggle"
+            }
+          ],
+          "condition": {
+            "type": "reputation",
+            "target": "free_traders",
+            "value": 25,
+            "comparison": "gte"
+          }
+        }
+      ],
+      "onComplete": [
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": 10
+        },
+        {
+          "type": "item",
+          "target": "good_cinnamon",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "stage_4_complication",
+      "objective": "Crown officials are suspicious; someone may have talked. Investigate the situation",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "choices": [
+        {
+          "id": "choice_investigate_tavern",
+          "text": "Question patrons at A Nau tavern for information",
+          "nextStageId": "stage_5_choice",
+          "effects": [
+            {
+              "type": "gold",
+              "value": -50
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_investigation",
+              "value": "tavern"
+            }
+          ]
+        },
+        {
+          "id": "choice_investigate_docks",
+          "text": "Check the docks for suspicious activity",
+          "nextStageId": "stage_5_choice",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "monopoly_investigation",
+              "value": "docks"
+            }
+          ]
+        },
+        {
+          "id": "choice_ignore_warning",
+          "text": "Ignore the warning and proceed as planned",
+          "nextStageId": "stage_5_choice",
+          "effects": [
+            {
+              "type": "flag",
+              "target": "monopoly_investigation",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "onComplete": [
+        {
+          "type": "reputation",
+          "target": "crown",
+          "value": -10
+        }
+      ]
+    },
+    {
+      "id": "stage_5_choice",
+      "objective": "Make a critical decision: abandon the operation, push through, or frame a rival",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "choices": [
+        {
+          "id": "choice_abandon_safety",
+          "text": "Abandon the operation - better safe than sorry",
+          "nextStageId": "stage_6_aftermath_abandon",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": -15
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": 5
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_outcome",
+              "value": "abandoned"
+            }
+          ]
+        },
+        {
+          "id": "choice_push_through",
+          "text": "Push through with the operation - the profit is worth the risk",
+          "nextStageId": "stage_6_aftermath_profit",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": 20
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": -25
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_outcome",
+              "value": "pushed_through"
+            }
+          ]
+        },
+        {
+          "id": "choice_frame_rival",
+          "text": "Frame a rival merchant to divert suspicion - ruthless but effective",
+          "nextStageId": "stage_6_aftermath_ruthless",
+          "effects": [
+            {
+              "type": "reputation",
+              "target": "free_traders",
+              "value": 10
+            },
+            {
+              "type": "reputation",
+              "target": "crown",
+              "value": -15
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_outcome",
+              "value": "framed_rival"
+            },
+            {
+              "type": "flag",
+              "target": "monopoly_ruthless",
+              "value": true
+            }
+          ],
+          "condition": {
+            "type": "reputation",
+            "target": "free_traders",
+            "value": 20,
+            "comparison": "gte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stage_6_aftermath_abandon",
+      "objective": "Meet with Yusuf to discuss the consequences of abandoning the operation",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 300
+        },
+        {
+          "type": "flag",
+          "target": "monopoly_quest_complete",
+          "value": "abandoned"
+        }
+      ]
+    },
+    {
+      "id": "stage_6_aftermath_profit",
+      "objective": "Collect your share of the profits from the successful operation",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 1500
+        },
+        {
+          "type": "item",
+          "target": "good_cloves",
+          "value": 3
+        },
+        {
+          "type": "item",
+          "target": "good_silk",
+          "value": 2
+        },
+        {
+          "type": "reputation",
+          "target": "free_traders",
+          "value": 15
+        },
+        {
+          "type": "flag",
+          "target": "monopoly_quest_complete",
+          "value": "profit"
+        }
+      ]
+    },
+    {
+      "id": "stage_6_aftermath_ruthless",
+      "objective": "Meet with Yusuf to discuss the aftermath of framing your rival",
+      "type": "talk",
+      "target": "yusuf_broker",
+      "onComplete": [
+        {
+          "type": "gold",
+          "value": 1200
+        },
+        {
+          "type": "item",
+          "target": "good_pepper",
+          "value": 15
+        },
+        {
+          "type": "item",
+          "target": "good_cinnamon",
+          "value": 8
+        },
+        {
+          "type": "reputation",
+          "target": "free_traders",
+          "value": 10
+        },
+        {
+          "type": "flag",
+          "target": "monopoly_quest_complete",
+          "value": "ruthless"
+        }
+      ]
+    }
+  ],
+  "rewards": [
+    {
+      "type": "unlock",
+      "target": "free_traders_exclusive_quests",
+      "value": true
+    }
+  ],
+  "isRepeatable": false
+}

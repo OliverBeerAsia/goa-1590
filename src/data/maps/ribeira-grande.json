@@ -1,0 +1,229 @@
+{
+  "compressionlevel": -1,
+  "height": 30,
+  "width": 40,
+  "infinite": false,
+  "orientation": "isometric",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 16,
+  "tiledversion": "1.10.0",
+  "type": "map",
+  "version": "1.10",
+  "properties": [
+    {
+      "name": "mapName",
+      "type": "string",
+      "value": "Ribeira Grande - The Great Waterfront"
+    },
+    {
+      "name": "historicalNote",
+      "type": "string",
+      "value": "The main trading hub of Portuguese Goa, where ships unloaded goods from across the empire."
+    }
+  ],
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "name": "goa_tiles",
+      "tilewidth": 32,
+      "tileheight": 16,
+      "tilecount": 6,
+      "columns": 6,
+      "tiles": [
+        { "id": 0, "type": "ground", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 1, "type": "water", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 2, "type": "building", "properties": [{ "name": "walkable", "type": "bool", "value": false }] },
+        { "id": 3, "type": "dock", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 4, "type": "market", "properties": [{ "name": "walkable", "type": "bool", "value": true }] },
+        { "id": 5, "type": "roof", "properties": [{ "name": "walkable", "type": "bool", "value": false }] }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "ground",
+      "type": "tilelayer",
+      "visible": true,
+      "width": 40,
+      "height": 30,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "data": [
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2,
+        2, 2, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 2, 2,
+        2, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 2,
+        2, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 2,
+        2, 2, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 2, 2,
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 2, 2, 2, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "name": "objects",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 1,
+          "name": "player_spawn",
+          "type": "spawn",
+          "x": 640,
+          "y": 240,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "entity", "type": "string", "value": "player" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "portuguese_merchant",
+          "type": "npc",
+          "x": 480,
+          "y": 128,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_portuguese" },
+            { "name": "npcName", "type": "string", "value": "Dom Afonso - Silk Trader" },
+            { "name": "goods", "type": "string", "value": "good_silk,good_porcelain" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "hindu_trader",
+          "type": "npc",
+          "x": 640,
+          "y": 192,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_hindu" },
+            { "name": "npcName", "type": "string", "value": "Venkatesh - Spice Merchant" },
+            { "name": "goods", "type": "string", "value": "good_pepper,good_cinnamon,good_ginger" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "arab_middleman",
+          "type": "npc",
+          "x": 800,
+          "y": 256,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_arab" },
+            { "name": "npcName", "type": "string", "value": "Hassan of Hormuz" },
+            { "name": "goods", "type": "string", "value": "good_cloves,good_nutmeg" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "customs_official",
+          "type": "npc",
+          "x": 480,
+          "y": 320,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_official" },
+            { "name": "npcName", "type": "string", "value": "Customs Inspector" },
+            { "name": "goods", "type": "string", "value": "" }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "sailor",
+          "type": "npc",
+          "x": 192,
+          "y": 160,
+          "width": 32,
+          "height": 48,
+          "properties": [
+            { "name": "npcType", "type": "string", "value": "npc_sailor" },
+            { "name": "npcName", "type": "string", "value": "João - Carrack Sailor" },
+            { "name": "goods", "type": "string", "value": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "zones",
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 10,
+          "name": "dock_area",
+          "type": "zone",
+          "x": 160,
+          "y": 0,
+          "width": 96,
+          "height": 480,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Ribeira Grande Docks" },
+            { "name": "description", "type": "string", "value": "The great waterfront where Portuguese carracks unload their cargo." }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "rua_direita",
+          "type": "zone",
+          "x": 256,
+          "y": 96,
+          "width": 768,
+          "height": 288,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Rua Direita" },
+            { "name": "description", "type": "string", "value": "The main commercial street of Goa. Merchants from across the world trade here." }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "market_square",
+          "type": "zone",
+          "x": 416,
+          "y": 160,
+          "width": 448,
+          "height": 160,
+          "properties": [
+            { "name": "zoneName", "type": "string", "value": "Market Square" },
+            { "name": "description", "type": "string", "value": "The heart of the spice trade. Best prices during morning market hours (7-9 AM)." }
+          ]
+        }
+      ]
+    }
+  ]
+}
