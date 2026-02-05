@@ -76,7 +76,9 @@ export class NPC extends Phaser.GameObjects.Sprite {
     name: string,
     goods: string[]
   ) {
-    super(scene, x, y, type);
+    // Use mapped texture key with fallback for unknown NPC types
+    const textureKey = NPC.textureMap[type] || 'char_merchant_light_0';
+    super(scene, x, y, textureKey);
     
     this.npcName = name;
     this.npcType = type;

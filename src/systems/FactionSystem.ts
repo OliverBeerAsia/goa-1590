@@ -396,4 +396,11 @@ export class FactionSystem {
 
     this.scene.events.emit('reputationLoaded', this.getReputationSummary());
   }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.reputation.clear();
+  }
 }

@@ -417,4 +417,49 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.gold = amount;
     this.scene.events.emit('goldChange', this.gold);
   }
+
+  /**
+   * Get save data for persistence
+   */
+  public getSaveData(): {
+    gold: number;
+    inventory: { item: string; quantity: number }[];
+    skills: { negotiation: number; appraisal: number; reputation: number; navigation: number };
+    maxCarryCapacity: number;
+  } {
+    return {
+      gold: this.gold,
+      inventory: [...this.inventory],
+      skills: { ...this.skills },
+      maxCarryCapacity: this.maxCarryCapacity,
+    };
+  }
+
+  /**
+   * Load save data and restore player state
+   */
+  public loadSaveData(data: {
+    gold: number;
+    inventory: { item: string; quantity: number }[];
+    skills: { negotiation: number; appraisal: number; reputation: number; navigation: number };
+    maxCarryCapacity: number;
+  }): void {
+    this.gold = data.gold ?? 100;
+    this.inventory = data.inventory ?? [];
+    this.skills = data.skills ?? { negotiation: 0, appraisal: 0, reputation: 0, navigation: 0 };
+    this.maxCarryCapacity = data.maxCarryCapacity ?? 20;
+
+    // Emit events to update UI
+    this.scene.events.emit('goldChange', this.gold);
+    this.scene.events.emit('inventoryChange', this.getInventory());
+    this.scene.events.emit('capacityChange', { current: this.getCarryCapacity().current, max: this.maxCarryCapacity });
+  }
+
+  /**
+   * Clean up resources when player is destroyed
+   */
+  public destroy(fromScene?: boolean): void {
+    // Call parent destroy
+    super.destroy(fromScene);
+  }
 }

@@ -7,6 +7,15 @@ import {
   COBBLESTONE,
   PORTUGUESE_BLUE,
   SILK_GOLD,
+  MOSS,
+  // Extended ramps and pattern generators
+  EXTENDED_RAMPS,
+  RGBA,
+  generateStonePattern,
+  generateWoodGrainPattern,
+  colorToInt,
+  hexToRGBA,
+  lerpColorRGBA,
 } from '../palette';
 
 /**
@@ -76,6 +85,79 @@ export interface BuildingSpec {
   heightLevels: number;
   description: string;
 }
+
+/** Material types for building walls */
+export type WallMaterial = 'whitewash' | 'stone' | 'wood' | 'laterite';
+
+/**
+ * Quality configuration for building generation
+ */
+export interface BuildingQualityConfig {
+  /** Apply material textures (stone, wood patterns) */
+  usePatternTextures: boolean;
+  /** Apply roof tile patterns */
+  useRoofTilePattern: boolean;
+  /** Draw Portuguese azulejo tile accents */
+  useAzulejoTiles: boolean;
+  /** Apply weathering effects (moss, water stains) */
+  useWeathering: boolean;
+  /** Use ambient occlusion for depth */
+  useAmbientOcclusion: boolean;
+  // === Phase 2: Architectural Detail Enhancements ===
+  /** Draw detailed window shutters (open/closed variants) */
+  useDetailedShutters: boolean;
+  /** Draw ornate balcony railings */
+  useOrnateBalconies: boolean;
+  /** Draw door knockers and handles */
+  useDoorHardware: boolean;
+  /** Draw hanging signs for shops/taverns */
+  useHangingSigns: boolean;
+  /** Draw flower boxes on windowsills */
+  useFlowerBoxes: boolean;
+}
+
+/** Quality presets for buildings */
+const BUILDING_QUALITY_PRESETS: Record<'low' | 'medium' | 'high', BuildingQualityConfig> = {
+  low: {
+    usePatternTextures: false,
+    useRoofTilePattern: false,
+    useAzulejoTiles: false,
+    useWeathering: false,
+    useAmbientOcclusion: false,
+    // Phase 2 architectural details - disabled for low quality
+    useDetailedShutters: false,
+    useOrnateBalconies: false,
+    useDoorHardware: false,
+    useHangingSigns: false,
+    useFlowerBoxes: false,
+  },
+  medium: {
+    usePatternTextures: true,
+    useRoofTilePattern: true,
+    useAzulejoTiles: true,
+    useWeathering: true,
+    useAmbientOcclusion: true,
+    // Phase 2 architectural details - standard features
+    useDetailedShutters: true,
+    useOrnateBalconies: false,
+    useDoorHardware: true,
+    useHangingSigns: true,
+    useFlowerBoxes: false,
+  },
+  high: {
+    usePatternTextures: true,
+    useRoofTilePattern: true,
+    useAzulejoTiles: true,
+    useWeathering: true,
+    useAmbientOcclusion: true,
+    // Phase 2 architectural details - full features
+    useDetailedShutters: true,
+    useOrnateBalconies: true,
+    useDoorHardware: true,
+    useHangingSigns: true,
+    useFlowerBoxes: true,
+  },
+};
 
 // IsometricPoint interface reserved for future building coordinate calculations
 // interface IsometricPoint {
@@ -209,10 +291,31 @@ export class BuildingGenerator {
   private graphics: Phaser.GameObjects.Graphics;
   private seed: number = 12345;
   private textureCache: Map<string, string> = new Map();
+  private qualityConfig: BuildingQualityConfig;
+  /** Cache for material texture patterns (keyed by material+width+height) */
+  private materialPatternCache: Map<string, RGBA[][]> = new Map();
+  /** Maximum number of cached material patterns to prevent unbounded memory growth */
+  private static readonly MAX_PATTERN_CACHE_SIZE = 50;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, quality: 'low' | 'medium' | 'high' = 'high') {
     this.scene = scene;
     this.graphics = scene.make.graphics({ x: 0, y: 0 });
+    this.qualityConfig = BUILDING_QUALITY_PRESETS[quality];
+  }
+
+  /**
+   * Set quality configuration
+   */
+  setQuality(quality: 'low' | 'medium' | 'high'): void {
+    this.qualityConfig = BUILDING_QUALITY_PRESETS[quality];
+    this.materialPatternCache.clear(); // Clear cache on quality change
+  }
+
+  /**
+   * Set custom quality configuration
+   */
+  setQualityConfig(config: Partial<BuildingQualityConfig>): void {
+    this.qualityConfig = { ...this.qualityConfig, ...config };
   }
 
   /**
@@ -528,7 +631,9 @@ export class BuildingGenerator {
     height: number,
     isRightFace: boolean,
     isLit: boolean = false,
-    hasShutters: boolean = true
+    hasShutters: boolean = true,
+    hasFlowerBox: boolean = false,
+    shuttersOpen: boolean = true
   ): void {
     // Isometric skew for windows
     const skewX = isRightFace ? 0.5 : -0.5;
@@ -559,18 +664,30 @@ export class BuildingGenerator {
     this.graphics.lineTo(x + width, y + height / 2 + width * skewX * 0.5);
     this.graphics.strokePath();
 
-    // Shutters (if not night or if has shutters)
-    if (hasShutters && !isLit) {
-      this.graphics.fillStyle(palette.portugueseBlue);
-      // Left shutter
-      this.graphics.fillRect(x - 2, y, 2, height);
-      // Right shutter
-      this.graphics.fillRect(x + width, y + width * skewX * 0.5, 2, height);
+    // Phase 2: Enhanced shutters or basic shutters
+    if (hasShutters) {
+      if (this.qualityConfig.useDetailedShutters) {
+        // Use enhanced detailed shutters
+        this.drawDetailedShutters(x, y, width, height, isRightFace, shuttersOpen && !isLit);
+      } else if (!isLit) {
+        // Basic shutters (legacy)
+        this.graphics.fillStyle(palette.portugueseBlue);
+        // Left shutter
+        this.graphics.fillRect(x - 2, y, 2, height);
+        // Right shutter
+        this.graphics.fillRect(x + width, y + width * skewX * 0.5, 2, height);
+      }
+    }
+
+    // Phase 2: Flower box on windowsill
+    if (hasFlowerBox) {
+      this.drawFlowerBox(x, y + height + width * skewX * 0.5, width, isRightFace);
     }
   }
 
   /**
    * Draw a door on an isometric surface
+   * Phase 2: Enhanced with door hardware (knocker, handle)
    */
   private drawDoor(
     x: number,
@@ -620,6 +737,9 @@ export class BuildingGenerator {
       this.graphics.moveTo(x + width / 2, y + 2);
       this.graphics.lineTo(x + width / 2, y + height - 1);
       this.graphics.strokePath();
+
+      // Phase 2: Add door hardware (knocker, handle)
+      this.drawDoorHardware(x, y, width, height, isRightFace);
     }
   }
 
@@ -880,6 +1000,20 @@ export class BuildingGenerator {
       wallRight
     );
 
+    // Apply whitewash texture to walls (if enabled)
+    if (this.qualityConfig.usePatternTextures) {
+      const wallHeight = spec.heightLevels * Z_HEIGHT;
+      // Right face texture
+      this.applyMaterialTexture(
+        centerX,
+        baseY - wallHeight,
+        spec.tilesX * TILE_WIDTH / 2,
+        wallHeight,
+        'whitewash',
+        0.2
+      );
+    }
+
     // Terracotta roof
     this.drawIsometricRoof(
       centerX,
@@ -894,10 +1028,14 @@ export class BuildingGenerator {
     // Blue trim around base
     this.drawTrim(centerX, baseY, spec.tilesX, spec.tilesY, palette.portugueseBlue);
 
-    // Windows
+    // Windows with azulejo trim (Portuguese tile accents)
+    // Phase 2: Add flower boxes on some windows for high quality
     const windowY = baseY - spec.heightLevels * Z_HEIGHT + 8;
-    this.drawWindow(centerX + 8, windowY, 6, 8, true, isNight);
-    this.drawWindow(centerX + 22, windowY, 6, 8, true, isNight);
+    const hasFlowerBoxes = this.qualityConfig.useFlowerBoxes;
+    this.drawWindow(centerX + 8, windowY, 6, 8, true, isNight, true, hasFlowerBoxes);
+    this.drawAzulejoTrim(centerX + 8, windowY, 6, 8, 2);
+    this.drawWindow(centerX + 22, windowY, 6, 8, true, isNight, true, hasFlowerBoxes);
+    this.drawAzulejoTrim(centerX + 22, windowY, 6, 8, 2);
 
     // Second floor windows
     this.drawWindow(centerX + 8, windowY + 12, 6, 8, true, isNight);
@@ -906,11 +1044,22 @@ export class BuildingGenerator {
     // Left face windows
     this.drawWindow(centerX - 20, windowY + 4, 5, 7, false, isNight);
 
-    // Wooden balcony (balcao)
-    this.drawBalcony(centerX + 15, windowY + 10, 20, 6);
+    // Wooden balcony (balcao) - Phase 2: enhanced ornate version
+    if (this.qualityConfig.useOrnateBalconies) {
+      this.drawOrnateBalcony(centerX + 15, windowY + 10, 20, 6);
+    } else {
+      this.drawBalcony(centerX + 15, windowY + 10, 20, 6);
+    }
 
-    // Door
+    // Door with azulejo trim
     this.drawDoor(centerX + 30, baseY - 14, 8, 12, true, state === 'active', true);
+    this.drawAzulejoTrim(centerX + 30, baseY - 14, 8, 12, 2);
+
+    // Apply weathering effects
+    if (this.qualityConfig.useWeathering) {
+      const wallHeight = spec.heightLevels * Z_HEIGHT;
+      this.applyWeathering(centerX, baseY - wallHeight, spec.tilesX * TILE_WIDTH / 2, wallHeight, 0.4);
+    }
 
     // Night glow from windows
     if (isNight) {
@@ -1066,19 +1215,24 @@ export class BuildingGenerator {
       this.darkenColor(palette.terracotta, 0.2)
     );
 
-    // Tavern sign
-    this.drawTavernSign(centerX + 24, baseY - 20);
+    // Tavern sign (Phase 2: enhanced or legacy)
+    if (this.qualityConfig.useHangingSigns) {
+      this.drawEnhancedHangingSign(centerX + 20, baseY - 26, 'tavern');
+    } else {
+      this.drawTavernSign(centerX + 24, baseY - 20);
+    }
 
     // Door (often open)
     this.drawDoor(centerX + 20, baseY - 2, 8, 12, true, true, true);
 
-    // Windows with warm glow at night
-    this.drawWindow(centerX + 6, baseY - 18, 6, 8, true, isNight);
+    // Windows with warm glow at night (Phase 2: with flower boxes on some)
+    const hasFlowerBoxes = this.qualityConfig.useFlowerBoxes;
+    this.drawWindow(centerX + 6, baseY - 18, 6, 8, true, isNight, true, hasFlowerBoxes);
     this.drawWindow(centerX - 10, baseY - 14, 5, 7, false, isNight);
 
     // Upper windows
     this.drawWindow(centerX + 6, baseY - 28, 5, 6, true, isNight);
-    this.drawWindow(centerX + 18, baseY - 28, 5, 6, true, isNight);
+    this.drawWindow(centerX + 18, baseY - 28, 5, 6, true, isNight, true, hasFlowerBoxes);
 
     // Warm lighting effect for night/active
     if (isNight || state === 'active') {
@@ -1320,12 +1474,17 @@ export class BuildingGenerator {
       this.darkenColor(palette.terracotta, 0.2)
     );
 
-    // Balcony (balcao)
-    this.drawBalcony(centerX + 10, baseY - 14, 16, 6);
+    // Balcony (balcao) - Phase 2: enhanced ornate version
+    if (this.qualityConfig.useOrnateBalconies) {
+      this.drawOrnateBalcony(centerX + 10, baseY - 14, 16, 6);
+    } else {
+      this.drawBalcony(centerX + 10, baseY - 14, 16, 6);
+    }
 
-    // Windows with blue shutters
-    this.drawWindow(centerX + 6, baseY - 10, 5, 7, true, isNight, true);
-    this.drawWindow(centerX + 18, baseY - 10, 5, 7, true, isNight, true);
+    // Windows with blue shutters - Phase 2: with flower boxes
+    const hasFlowerBoxes = this.qualityConfig.useFlowerBoxes;
+    this.drawWindow(centerX + 6, baseY - 10, 5, 7, true, isNight, true, hasFlowerBoxes);
+    this.drawWindow(centerX + 18, baseY - 10, 5, 7, true, isNight, true, hasFlowerBoxes);
 
     // Upper windows
     this.drawWindow(centerX + 6, baseY - 20, 5, 6, true, isNight, true);
@@ -1874,6 +2033,333 @@ export class BuildingGenerator {
   }
 
   // ==========================================================================
+  // PHASE 2: ENHANCED ARCHITECTURAL DETAILS
+  // ==========================================================================
+
+  /**
+   * Draw detailed window shutters (open or closed)
+   * Enhanced version with wood grain and metal hinges
+   */
+  private drawDetailedShutters(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    isRightFace: boolean,
+    isOpen: boolean
+  ): void {
+    if (!this.qualityConfig.useDetailedShutters) return;
+
+    const skewX = isRightFace ? 0.5 : -0.5;
+    const shutterWidth = width / 2 + 1;
+    const woodColor = palette.portugueseBlue;
+    const woodShadow = this.darkenColor(woodColor, 0.3);
+
+    if (isOpen) {
+      // Open shutters - show them at an angle
+      // Left shutter (open outward)
+      this.graphics.fillStyle(woodColor);
+      this.graphics.fillRect(x - shutterWidth - 1, y, shutterWidth - 2, height);
+      this.graphics.fillStyle(woodShadow);
+      this.graphics.fillRect(x - shutterWidth - 1, y, 2, height); // Shadow edge
+
+      // Right shutter (open outward)
+      const rightX = x + width + 1;
+      this.graphics.fillStyle(woodColor);
+      this.graphics.fillRect(rightX, y + width * skewX * 0.5, shutterWidth - 2, height);
+      this.graphics.fillStyle(woodShadow);
+      this.graphics.fillRect(rightX + shutterWidth - 4, y + width * skewX * 0.5, 2, height);
+
+      // Wood slats detail on open shutters
+      this.graphics.lineStyle(1, woodShadow, 0.4);
+      for (let i = 1; i < 4; i++) {
+        const slotY = y + (height / 4) * i;
+        // Left shutter slats
+        this.graphics.beginPath();
+        this.graphics.moveTo(x - shutterWidth, slotY);
+        this.graphics.lineTo(x - 3, slotY);
+        this.graphics.strokePath();
+        // Right shutter slats
+        this.graphics.beginPath();
+        this.graphics.moveTo(rightX + 1, slotY + width * skewX * 0.5);
+        this.graphics.lineTo(rightX + shutterWidth - 3, slotY + width * skewX * 0.5);
+        this.graphics.strokePath();
+      }
+    } else {
+      // Closed shutters covering window
+      // Left shutter
+      this.graphics.fillStyle(woodColor);
+      this.graphics.beginPath();
+      this.graphics.moveTo(x, y);
+      this.graphics.lineTo(x + width / 2, y + (width / 2) * skewX * 0.5);
+      this.graphics.lineTo(x + width / 2, y + height + (width / 2) * skewX * 0.5);
+      this.graphics.lineTo(x, y + height);
+      this.graphics.closePath();
+      this.graphics.fillPath();
+
+      // Right shutter
+      this.graphics.fillStyle(woodShadow);
+      this.graphics.beginPath();
+      this.graphics.moveTo(x + width / 2, y + (width / 2) * skewX * 0.5);
+      this.graphics.lineTo(x + width, y + width * skewX * 0.5);
+      this.graphics.lineTo(x + width, y + height + width * skewX * 0.5);
+      this.graphics.lineTo(x + width / 2, y + height + (width / 2) * skewX * 0.5);
+      this.graphics.closePath();
+      this.graphics.fillPath();
+
+      // Shutter gap/split
+      this.graphics.lineStyle(1, palette.darkWood);
+      this.graphics.beginPath();
+      this.graphics.moveTo(x + width / 2, y + (width / 2) * skewX * 0.5);
+      this.graphics.lineTo(x + width / 2, y + height + (width / 2) * skewX * 0.5);
+      this.graphics.strokePath();
+
+      // Wood slats on closed shutters
+      this.graphics.lineStyle(1, palette.darkWood, 0.3);
+      for (let i = 1; i < 4; i++) {
+        const slotY = y + (height / 4) * i;
+        this.graphics.beginPath();
+        this.graphics.moveTo(x + 1, slotY);
+        this.graphics.lineTo(x + width - 1, slotY + (width - 2) * skewX * 0.5);
+        this.graphics.strokePath();
+      }
+    }
+
+    // Metal hinges
+    this.graphics.fillStyle(0x4a4a4a); // Iron color
+    this.graphics.fillCircle(x - 1, y + 3, 1.5);
+    this.graphics.fillCircle(x - 1, y + height - 3, 1.5);
+    this.graphics.fillCircle(x + width + 1, y + 3 + width * skewX * 0.5, 1.5);
+    this.graphics.fillCircle(x + width + 1, y + height - 3 + width * skewX * 0.5, 1.5);
+  }
+
+  /**
+   * Draw an ornate balcony with decorative ironwork railing
+   */
+  private drawOrnateBalcony(x: number, y: number, width: number, height: number): void {
+    if (!this.qualityConfig.useOrnateBalconies) {
+      // Fall back to basic balcony
+      this.drawBalcony(x, y, width, height);
+      return;
+    }
+
+    // Balcony floor with decorative edge
+    this.graphics.fillStyle(palette.darkWood);
+    this.graphics.fillRect(x - width / 2, y, width, 4);
+    // Stone corbels/supports
+    this.graphics.fillStyle(palette.ochreSand);
+    this.graphics.fillRect(x - width / 2 - 1, y + 4, 3, 5);
+    this.graphics.fillRect(x + width / 2 - 2, y + 4, 3, 5);
+    // Small middle support
+    this.graphics.fillRect(x - 1, y + 4, 2, 4);
+
+    // Ornate iron railing
+    this.graphics.lineStyle(1, 0x2a2a2a); // Dark iron
+    // Top rail
+    this.graphics.beginPath();
+    this.graphics.moveTo(x - width / 2, y - height);
+    this.graphics.lineTo(x + width / 2, y - height);
+    this.graphics.strokePath();
+    // Bottom rail
+    this.graphics.beginPath();
+    this.graphics.moveTo(x - width / 2, y - 2);
+    this.graphics.lineTo(x + width / 2, y - 2);
+    this.graphics.strokePath();
+
+    // Decorative vertical balusters with scrollwork
+    const balusterCount = Math.floor(width / 5);
+    for (let i = 0; i <= balusterCount; i++) {
+      const bx = x - width / 2 + i * (width / balusterCount);
+      // Main vertical bar
+      this.graphics.fillStyle(0x3a3a3a);
+      this.graphics.fillRect(bx - 0.5, y - height, 1, height - 2);
+
+      // Decorative scroll at top (simplified)
+      if (i > 0 && i < balusterCount) {
+        this.graphics.lineStyle(1, 0x3a3a3a);
+        this.graphics.beginPath();
+        this.graphics.arc(bx, y - height + 3, 2, 0, Math.PI, true);
+        this.graphics.strokePath();
+      }
+    }
+
+    // Corner posts (slightly thicker)
+    this.graphics.fillStyle(0x2a2a2a);
+    this.graphics.fillRect(x - width / 2 - 1, y - height - 1, 2, height);
+    this.graphics.fillRect(x + width / 2 - 1, y - height - 1, 2, height);
+
+    // Decorative finials on corner posts
+    this.graphics.fillCircle(x - width / 2, y - height - 2, 2);
+    this.graphics.fillCircle(x + width / 2, y - height - 2, 2);
+  }
+
+  /**
+   * Draw door knocker and handle hardware
+   */
+  private drawDoorHardware(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    isRightFace: boolean
+  ): void {
+    if (!this.qualityConfig.useDoorHardware) return;
+
+    const skewX = isRightFace ? 0.5 : -0.5;
+    const handleX = x + width * 0.7;
+    const handleY = y + height * 0.5 + (width * 0.7) * skewX * 0.5;
+
+    // Door handle/knob (brass)
+    this.graphics.fillStyle(0xB8860B); // Dark gold brass
+    this.graphics.fillCircle(handleX, handleY, 2.5);
+    this.graphics.fillStyle(0xDAA520); // Lighter gold highlight
+    this.graphics.fillCircle(handleX - 0.5, handleY - 0.5, 1);
+
+    // Door knocker (ring style)
+    const knockerX = x + width * 0.5;
+    const knockerY = y + height * 0.35 + (width * 0.5) * skewX * 0.5;
+
+    // Knocker backplate
+    this.graphics.fillStyle(0x8B4513); // Bronze/brass
+    this.graphics.fillCircle(knockerX, knockerY, 2);
+
+    // Knocker ring
+    this.graphics.lineStyle(2, 0xB8860B);
+    this.graphics.beginPath();
+    this.graphics.arc(knockerX, knockerY + 3, 2.5, Math.PI * 0.2, Math.PI * 0.8, false);
+    this.graphics.strokePath();
+
+    // Keyhole (below handle)
+    this.graphics.fillStyle(0x1a1a1a);
+    this.graphics.fillCircle(handleX, handleY + 5, 1);
+    this.graphics.fillRect(handleX - 0.5, handleY + 5, 1, 3);
+  }
+
+  /**
+   * Draw a hanging shop/tavern sign
+   */
+  private drawEnhancedHangingSign(
+    x: number,
+    y: number,
+    signType: 'tavern' | 'shop' | 'merchant'
+  ): void {
+    if (!this.qualityConfig.useHangingSigns) return;
+
+    // Iron bracket
+    this.graphics.lineStyle(2, 0x2a2a2a);
+    this.graphics.beginPath();
+    this.graphics.moveTo(x, y);
+    this.graphics.lineTo(x + 12, y);
+    this.graphics.lineTo(x + 12, y + 4);
+    this.graphics.strokePath();
+
+    // Decorative scroll on bracket
+    this.graphics.lineStyle(1, 0x3a3a3a);
+    this.graphics.beginPath();
+    this.graphics.arc(x + 6, y + 2, 3, Math.PI, 0, true);
+    this.graphics.strokePath();
+
+    // Hanging chains
+    this.graphics.lineStyle(1, 0x4a4a4a);
+    this.graphics.beginPath();
+    this.graphics.moveTo(x + 8, y + 4);
+    this.graphics.lineTo(x + 6, y + 10);
+    this.graphics.moveTo(x + 16, y + 4);
+    this.graphics.lineTo(x + 18, y + 10);
+    this.graphics.strokePath();
+
+    // Sign board
+    const signY = y + 10;
+    const signW = 14;
+    const signH = 10;
+
+    // Sign background (weathered wood)
+    this.graphics.fillStyle(WOOD_DARK.base);
+    this.graphics.fillRect(x + 5, signY, signW, signH);
+    this.graphics.fillStyle(WOOD_DARK.shadow);
+    this.graphics.fillRect(x + 5 + signW - 3, signY, 3, signH);
+
+    // Sign frame
+    this.graphics.lineStyle(1, WOOD_DARK.deep);
+    this.graphics.strokeRect(x + 5, signY, signW, signH);
+
+    // Sign icon based on type
+    this.graphics.fillStyle(0xFFD700);
+    switch (signType) {
+      case 'tavern':
+        // Mug/tankard shape
+        this.graphics.fillRect(x + 9, signY + 3, 5, 5);
+        this.graphics.fillRect(x + 14, signY + 4, 2, 3);
+        break;
+      case 'shop':
+        // Simple goods/box shape
+        this.graphics.fillRect(x + 8, signY + 4, 6, 4);
+        this.graphics.lineStyle(1, 0xB8860B);
+        this.graphics.strokeRect(x + 8, signY + 4, 6, 4);
+        break;
+      case 'merchant':
+        // Coin/trade symbol
+        this.graphics.fillCircle(x + 12, signY + 5, 3);
+        this.graphics.fillStyle(WOOD_DARK.shadow);
+        this.graphics.fillCircle(x + 12, signY + 5, 1.5);
+        break;
+    }
+  }
+
+  /**
+   * Draw flower box on windowsill
+   */
+  private drawFlowerBox(
+    x: number,
+    y: number,
+    width: number,
+    isRightFace: boolean
+  ): void {
+    if (!this.qualityConfig.useFlowerBoxes) return;
+
+    // isRightFace could be used for perspective skew in future
+    void isRightFace;
+    const boxHeight = 4;
+
+    // Flower box (terracotta)
+    this.graphics.fillStyle(TERRACOTTA.base);
+    this.graphics.fillRect(x - 1, y, width + 2, boxHeight);
+    this.graphics.fillStyle(TERRACOTTA.shadow);
+    this.graphics.fillRect(x + width - 1, y, 2, boxHeight);
+
+    // Box rim
+    this.graphics.fillStyle(TERRACOTTA.highlight);
+    this.graphics.fillRect(x - 1, y, width + 2, 1);
+
+    // Soil
+    this.graphics.fillStyle(0x3a2a1a);
+    this.graphics.fillRect(x, y + 1, width, 2);
+
+    // Flowers/plants
+    const flowerColors = [0xFF69B4, 0xFF4500, 0x9932CC, 0xFFD700, 0xFF6347];
+    const plantCount = Math.floor(width / 3);
+
+    for (let i = 0; i < plantCount; i++) {
+      const flowerX = x + 2 + i * 3;
+
+      // Green leaves/stem
+      this.graphics.fillStyle(0x228B22);
+      this.graphics.fillRect(flowerX, y - 3, 1, 4);
+      this.graphics.fillRect(flowerX - 1, y - 1, 1, 2);
+      this.graphics.fillRect(flowerX + 1, y - 2, 1, 2);
+
+      // Flower head
+      const flowerColor = flowerColors[i % flowerColors.length];
+      this.graphics.fillStyle(flowerColor);
+      this.graphics.fillCircle(flowerX, y - 4, 1.5);
+
+      // Flower center
+      this.graphics.fillStyle(0xFFFF00);
+      this.graphics.fillCircle(flowerX, y - 4, 0.5);
+    }
+  }
+
+  // ==========================================================================
   // COLOR UTILITIES
   // ==========================================================================
 
@@ -1884,16 +2370,336 @@ export class BuildingGenerator {
     return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
   }
 
+  // ==========================================================================
+  // MATERIAL TEXTURES (Phase 4.1)
+  // ==========================================================================
+
   /**
-   * Lighten a color by a specified amount
-   * Reserved for future use in highlight effects
+   * Get or generate a material texture pattern (cached)
    */
-  // private _lightenColor(color: number, amount: number): number {
-  //   const r = Math.min(255, ((color >> 16) & 0xff) + 255 * amount);
-  //   const g = Math.min(255, ((color >> 8) & 0xff) + 255 * amount);
-  //   const b = Math.min(255, (color & 0xff) + 255 * amount);
-  //   return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
-  // }
+  private getMaterialPattern(
+    material: WallMaterial,
+    width: number,
+    height: number
+  ): RGBA[][] | null {
+    if (!this.qualityConfig.usePatternTextures) return null;
+
+    const cacheKey = `${material}_${width}_${height}`;
+
+    if (this.materialPatternCache.has(cacheKey)) {
+      return this.materialPatternCache.get(cacheKey)!;
+    }
+
+    let pattern: RGBA[][] | null = null;
+
+    switch (material) {
+      case 'stone':
+        pattern = generateStonePattern({
+          width,
+          height,
+          scale: 6,
+          variation: 0.2,
+          seed: this.seed,
+        });
+        break;
+      case 'wood':
+        pattern = generateWoodGrainPattern({
+          width,
+          height,
+          scale: 4,
+          variation: 0.3,
+          seed: this.seed,
+        });
+        break;
+      case 'whitewash':
+        // Whitewash is mostly flat with subtle variation
+        pattern = this.generateWhitewashPattern(width, height);
+        break;
+      case 'laterite':
+        // Red Goan earth/stone
+        pattern = this.generateLateriteWallPattern(width, height);
+        break;
+    }
+
+    if (pattern) {
+      // Evict oldest entry if cache is full
+      if (this.materialPatternCache.size >= BuildingGenerator.MAX_PATTERN_CACHE_SIZE) {
+        const oldestKey = this.materialPatternCache.keys().next().value;
+        if (oldestKey) {
+          this.materialPatternCache.delete(oldestKey);
+        }
+      }
+      this.materialPatternCache.set(cacheKey, pattern);
+    }
+
+    return pattern;
+  }
+
+  /**
+   * Generate subtle whitewash texture
+   */
+  private generateWhitewashPattern(width: number, height: number): RGBA[][] {
+    const result: RGBA[][] = [];
+    const baseColor = EXTENDED_RAMPS.WHITEWASH.mid.rgb;
+
+    for (let y = 0; y < height; y++) {
+      const row: RGBA[] = [];
+      for (let x = 0; x < width; x++) {
+        // Very subtle variation for whitewash
+        const variation = (Math.sin(x * 0.1) * Math.cos(y * 0.1) + this.random() - 0.5) * 0.05;
+        const lightness = 1 + variation;
+
+        row.push({
+          r: Math.min(255, Math.floor(baseColor.r * lightness)),
+          g: Math.min(255, Math.floor(baseColor.g * lightness)),
+          b: Math.min(255, Math.floor(baseColor.b * lightness)),
+          a: 255,
+        });
+      }
+      result.push(row);
+    }
+
+    return result;
+  }
+
+  /**
+   * Generate laterite (red earth) wall pattern
+   */
+  private generateLateriteWallPattern(width: number, height: number): RGBA[][] {
+    const result: RGBA[][] = [];
+    const baseColor = EXTENDED_RAMPS.TERRACOTTA.mid.rgb;
+    const darkColor = EXTENDED_RAMPS.TERRACOTTA.shadow.rgb;
+
+    for (let y = 0; y < height; y++) {
+      const row: RGBA[] = [];
+      for (let x = 0; x < width; x++) {
+        // Clumpy texture typical of laterite
+        const clumpNoise = this.random();
+        const ratio = clumpNoise > 0.7 ? 0.3 : (clumpNoise > 0.4 ? 0 : -0.1);
+
+        row.push(lerpColorRGBA(baseColor, darkColor, 0.5 + ratio));
+      }
+      result.push(row);
+    }
+
+    return result;
+  }
+
+  /**
+   * Apply material texture to a rectangular area
+   */
+  private applyMaterialTexture(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    material: WallMaterial,
+    alpha: number = 0.4
+  ): void {
+    const pattern = this.getMaterialPattern(material, width, height);
+    if (!pattern) return;
+
+    for (let py = 0; py < height; py++) {
+      for (let px = 0; px < width; px++) {
+        const pixel = pattern[py]?.[px];
+        if (pixel) {
+          const color = colorToInt(pixel);
+          this.graphics.fillStyle(color, alpha);
+          this.graphics.fillRect(x + px, y + py, 1, 1);
+        }
+      }
+    }
+  }
+
+  // ==========================================================================
+  // PORTUGUESE AZULEJO TILES (Phase 4.2)
+  // ==========================================================================
+
+  /**
+   * Generate Portuguese azulejo (blue and white tile) pattern
+   * Creates distinctive geometric patterns used in Portuguese colonial architecture
+   */
+  private generateAzulejoPattern(width: number, height: number): RGBA[][] {
+    const result: RGBA[][] = [];
+    const blueColor = hexToRGBA('#1E3A5F'); // Portuguese blue
+    const whiteColor = hexToRGBA('#FFFDF8'); // Whitewash white
+
+    const tileSize = 8; // 8x8 pixel tiles
+
+    for (let y = 0; y < height; y++) {
+      const row: RGBA[] = [];
+      const tileY = Math.floor(y / tileSize);
+      const localY = y % tileSize;
+
+      for (let x = 0; x < width; x++) {
+        const tileX = Math.floor(x / tileSize);
+        const localX = x % tileSize;
+
+        // Alternate tile patterns
+        const patternType = (tileX + tileY) % 2;
+
+        let isBlue: boolean;
+        if (patternType === 0) {
+          // Diamond pattern
+          const centerDist = Math.abs(localX - 3.5) + Math.abs(localY - 3.5);
+          isBlue = centerDist < 3;
+        } else {
+          // Cross pattern
+          const isHorizontalBar = localY >= 3 && localY <= 4;
+          const isVerticalBar = localX >= 3 && localX <= 4;
+          isBlue = isHorizontalBar || isVerticalBar;
+        }
+
+        row.push(isBlue ? blueColor : whiteColor);
+      }
+      result.push(row);
+    }
+
+    return result;
+  }
+
+  /**
+   * Draw azulejo tile trim around windows or door frames
+   */
+  private drawAzulejoTrim(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    trimWidth: number = 3
+  ): void {
+    if (!this.qualityConfig.useAzulejoTiles) return;
+
+    const pattern = this.generateAzulejoPattern(width + trimWidth * 2, height + trimWidth * 2);
+
+    // Draw trim around the perimeter
+    for (let py = 0; py < height + trimWidth * 2; py++) {
+      for (let px = 0; px < width + trimWidth * 2; px++) {
+        // Only draw in the trim area (not the center)
+        const inCenter = px >= trimWidth && px < width + trimWidth &&
+                        py >= trimWidth && py < height + trimWidth;
+        if (inCenter) continue;
+
+        const pixel = pattern[py]?.[px];
+        if (pixel) {
+          const color = colorToInt(pixel);
+          this.graphics.fillStyle(color, 1);
+          this.graphics.fillRect(x - trimWidth + px, y - trimWidth + py, 1, 1);
+        }
+      }
+    }
+  }
+
+
+  // ==========================================================================
+  // ROOF TILES (Phase 4.3)
+  // ==========================================================================
+  // ==========================================================================
+  // WEATHERING EFFECTS (Phase 4.4)
+  // ==========================================================================
+
+  /**
+   * Apply weathering effects to a building surface
+   * Includes moss at base, water stains, and corner darkening
+   */
+  private applyWeathering(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    intensity: number = 0.5
+  ): void {
+    if (!this.qualityConfig.useWeathering) return;
+
+    // Moss at wall base (green patches)
+    this.drawMossPatches(x, y + height - 8, width, 8, intensity);
+
+    // Water stains (vertical streaks from rain)
+    this.drawWaterStains(x, y, width, height, intensity * 0.5);
+
+    // Corner darkening (ambient occlusion)
+    if (this.qualityConfig.useAmbientOcclusion) {
+      this.drawCornerDarkening(x, y, width, height, intensity * 0.3);
+    }
+  }
+
+  /**
+   * Draw moss patches at wall bases
+   */
+  private drawMossPatches(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    intensity: number
+  ): void {
+    const mossBaseColor = MOSS.base;
+    const mossShadowColor = MOSS.shadow;
+
+    for (let i = 0; i < width * intensity; i++) {
+      const px = x + Math.floor(this.random() * width);
+      const py = y + Math.floor(this.random() * height);
+      const size = 1 + Math.floor(this.random() * 3);
+
+      const color = this.random() > 0.5 ? mossBaseColor : mossShadowColor;
+      this.graphics.fillStyle(color, 0.4 + this.random() * 0.3);
+      this.graphics.fillCircle(px, py, size);
+    }
+  }
+
+  /**
+   * Draw water stain streaks on walls
+   */
+  private drawWaterStains(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    intensity: number
+  ): void {
+    const stainCount = Math.floor(width * intensity * 0.1);
+
+    for (let i = 0; i < stainCount; i++) {
+      const startX = x + Math.floor(this.random() * width);
+      const startY = y + Math.floor(this.random() * (height * 0.3));
+      const stainLength = 5 + Math.floor(this.random() * 15);
+
+      this.graphics.fillStyle(0x000000, 0.05 + this.random() * 0.05);
+
+      // Draw vertical stain with slight variation
+      for (let j = 0; j < stainLength; j++) {
+        const wobble = Math.floor((this.random() - 0.5) * 2);
+        this.graphics.fillRect(startX + wobble, startY + j, 1, 1);
+      }
+    }
+  }
+
+  /**
+   * Draw ambient occlusion darkening at corners
+   */
+  private drawCornerDarkening(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    intensity: number
+  ): void {
+    const cornerSize = 4;
+
+    // Bottom-left corner
+    for (let i = 0; i < cornerSize; i++) {
+      const alpha = intensity * (1 - i / cornerSize);
+      this.graphics.fillStyle(0x000000, alpha);
+      this.graphics.fillRect(x, y + height - cornerSize + i, cornerSize - i, 1);
+    }
+
+    // Bottom-right corner
+    for (let i = 0; i < cornerSize; i++) {
+      const alpha = intensity * (1 - i / cornerSize);
+      this.graphics.fillStyle(0x000000, alpha);
+      this.graphics.fillRect(x + width - cornerSize + i, y + height - cornerSize + i, cornerSize - i, 1);
+    }
+  }
 
   // ==========================================================================
   // CLEANUP
@@ -1902,6 +2708,7 @@ export class BuildingGenerator {
   public destroy(): void {
     this.graphics.destroy();
     this.textureCache.clear();
+    this.materialPatternCache.clear();
   }
 
   /**
@@ -1914,5 +2721,6 @@ export class BuildingGenerator {
       }
     }
     this.textureCache.clear();
+    this.materialPatternCache.clear();
   }
 }

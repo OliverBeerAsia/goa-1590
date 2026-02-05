@@ -502,4 +502,14 @@ export class ContractSystem {
       available: this.availableContracts,
     });
   }
+
+  /**
+   * Clean up event listeners and data to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('hourChange');
+    this.scene.events.off('playerSell');
+    this.availableContracts = [];
+    this.activeContracts.clear();
+  }
 }

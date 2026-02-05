@@ -31,6 +31,45 @@ interface LocationAtmosphere {
   description: string;
 }
 
+/**
+ * Phase 2: Location-based color grading configuration
+ * Each area has a distinct visual mood through color adjustments
+ */
+export interface ColorGrade {
+  /** Tint color to blend over the scene (hex) */
+  tint: number;
+  /** Tint intensity (0-1) */
+  tintIntensity: number;
+  /** Saturation multiplier (1.0 = normal, <1 = desaturated, >1 = vivid) */
+  saturation: number;
+  /** Contrast multiplier (1.0 = normal) */
+  contrast: number;
+  /** Brightness offset (-1 to 1) */
+  brightness: number;
+}
+
+/**
+ * Location-specific color grades for distinct area moods
+ */
+const LOCATION_COLOR_GRADES: Record<string, ColorGrade> = {
+  // Docks: Cool, slightly blue tint for sea air feeling
+  docks: { tint: 0xE8F0FF, tintIntensity: 0.08, saturation: 0.95, contrast: 1.05, brightness: 0.02 },
+  // Market: Warm, golden tones for bustling commerce
+  ribeira_grande: { tint: 0xFFF5E0, tintIntensity: 0.06, saturation: 1.1, contrast: 1.0, brightness: 0.0 },
+  // Cathedral: Cool, ethereal, slightly desaturated
+  se_cathedral: { tint: 0xF0F5FF, tintIntensity: 0.1, saturation: 0.9, contrast: 0.95, brightness: -0.02 },
+  // Tavern: Warm amber, cozy atmosphere
+  tavern: { tint: 0xFFE8C0, tintIntensity: 0.12, saturation: 1.05, contrast: 1.02, brightness: -0.03 },
+  // Old Quarter: Sepia-tinted, nostalgic feel
+  old_quarter: { tint: 0xFFF0DD, tintIntensity: 0.08, saturation: 0.98, contrast: 1.0, brightness: 0.0 },
+  // Warehouse: Dusty, slightly desaturated
+  warehouse: { tint: 0xF0E8D8, tintIntensity: 0.1, saturation: 0.92, contrast: 0.98, brightness: -0.04 },
+  // Alfandega: Formal, slightly cool
+  alfandega: { tint: 0xF8F8FF, tintIntensity: 0.05, saturation: 0.97, contrast: 1.02, brightness: 0.01 },
+  // Default for unknown locations
+  default: { tint: 0xFFFFFF, tintIntensity: 0, saturation: 1.0, contrast: 1.0, brightness: 0.0 },
+};
+
 export class AtmosphereSystem {
   private scene: Phaser.Scene;
 
@@ -38,6 +77,10 @@ export class AtmosphereSystem {
   private ambientOverlay: Phaser.GameObjects.Graphics | null = null;
   private shadowLayer: Phaser.GameObjects.Graphics | null = null;
   private vignetteOverlay: Phaser.GameObjects.Graphics | null = null;
+
+  // Phase 2: Color grading overlay
+  private colorGradeOverlay: Phaser.GameObjects.Graphics | null = null;
+  private currentColorGrade: ColorGrade = LOCATION_COLOR_GRADES.default;
 
   // Point light system integration
   private lightingSystem: LightingSystem | null = null;
@@ -195,6 +238,13 @@ export class AtmosphereSystem {
     this.ambientOverlay.setScrollFactor(0);
     this.ambientOverlay.setDepth(9500);
     this.ambientOverlay.setBlendMode(Phaser.BlendModes.MULTIPLY);
+
+    // Phase 2: Color grading overlay (applied after ambient but before vignette)
+    this.colorGradeOverlay = this.scene.add.graphics();
+    this.colorGradeOverlay.setScrollFactor(0);
+    this.colorGradeOverlay.setDepth(9550);
+    // Use SCREEN blend mode for subtle color overlay without darkening
+    this.colorGradeOverlay.setBlendMode(Phaser.BlendModes.SCREEN);
 
     // Vignette for depth
     this.vignetteOverlay = this.scene.add.graphics();
@@ -445,10 +495,11 @@ export class AtmosphereSystem {
 
     this.ambientOverlay.clear();
 
-    // Apply subtle ambient color overlay - reduced opacity for clearer visuals
+    // Apply subtle ambient color overlay - greatly reduced for clearer visuals
     if (this.currentLighting.ambientAlpha > 0) {
       // Reduce the alpha significantly to avoid muddy visuals
-      const reducedAlpha = this.currentLighting.ambientAlpha * 0.3;
+      // Using 0.1 multiplier instead of 0.3 for much lighter effect
+      const reducedAlpha = this.currentLighting.ambientAlpha * 0.1;
       this.ambientOverlay.fillStyle(
         this.currentLighting.ambientColor,
         reducedAlpha
@@ -469,7 +520,7 @@ export class AtmosphereSystem {
   public setLocation(locationId: string, isInterior: boolean = false): void {
     this.currentLocation = locationId;
     this.isInterior = isInterior;
-    
+
     // Apply location-specific atmosphere
     const atmosphere = this.locationAtmospheres.find(l => l.id === locationId);
     if (atmosphere) {
@@ -477,12 +528,103 @@ export class AtmosphereSystem {
         location: locationId,
         atmosphere: atmosphere,
       });
-      
+
       // Update particle type
       this.setParticleType(atmosphere.particleType);
     }
-    
+
+    // Phase 2: Apply location-based color grading
+    this.setLocationColorGrade(locationId);
+
     this.applyLighting();
+  }
+
+  /**
+   * Phase 2: Set and apply location-based color grading
+   * Each area has a distinct visual mood through subtle color adjustments
+   */
+  private setLocationColorGrade(locationId: string): void {
+    // Get the color grade for this location (or default)
+    const grade = LOCATION_COLOR_GRADES[locationId] || LOCATION_COLOR_GRADES.default;
+
+    // Smoothly transition to the new color grade
+    this.transitionToColorGrade(grade);
+  }
+
+  /**
+   * Smoothly transition between color grades
+   */
+  private transitionToColorGrade(targetGrade: ColorGrade): void {
+    const startGrade = { ...this.currentColorGrade };
+    const progress = { value: 0 };
+
+    this.scene.tweens.add({
+      targets: progress,
+      value: 1,
+      duration: 1500, // 1.5 second transition
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        // Interpolate color grade values
+        this.currentColorGrade = {
+          tint: this.lerpColor(startGrade.tint, targetGrade.tint, progress.value),
+          tintIntensity: Phaser.Math.Linear(startGrade.tintIntensity, targetGrade.tintIntensity, progress.value),
+          saturation: Phaser.Math.Linear(startGrade.saturation, targetGrade.saturation, progress.value),
+          contrast: Phaser.Math.Linear(startGrade.contrast, targetGrade.contrast, progress.value),
+          brightness: Phaser.Math.Linear(startGrade.brightness, targetGrade.brightness, progress.value),
+        };
+        this.applyColorGrade();
+      },
+    });
+  }
+
+  /**
+   * Apply the current color grade overlay
+   */
+  private applyColorGrade(): void {
+    if (!this.colorGradeOverlay) return;
+
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    this.colorGradeOverlay.clear();
+
+    // Only apply if there's meaningful tint intensity
+    if (this.currentColorGrade.tintIntensity > 0.01) {
+      // Apply the tint color with low opacity
+      this.colorGradeOverlay.fillStyle(
+        this.currentColorGrade.tint,
+        this.currentColorGrade.tintIntensity
+      );
+      this.colorGradeOverlay.fillRect(0, 0, width, height);
+    }
+
+    // Apply brightness adjustment if needed
+    if (this.currentColorGrade.brightness !== 0) {
+      const brightnessColor = this.currentColorGrade.brightness > 0 ? 0xffffff : 0x000000;
+      const brightnessAlpha = Math.abs(this.currentColorGrade.brightness) * 0.1;
+      this.colorGradeOverlay.fillStyle(brightnessColor, brightnessAlpha);
+      this.colorGradeOverlay.fillRect(0, 0, width, height);
+    }
+
+    // Emit event for other systems that might want to respond to color grading
+    this.scene.events.emit('colorGradeChange', {
+      location: this.currentLocation,
+      colorGrade: this.currentColorGrade,
+    });
+  }
+
+  /**
+   * Get the current color grade (for external systems like DepthSystem)
+   */
+  public getCurrentColorGrade(): ColorGrade {
+    return this.currentColorGrade;
+  }
+
+  /**
+   * Get color grade for a specific location (useful for previewing or planning)
+   */
+  public getLocationColorGrade(locationId: string): ColorGrade {
+    return LOCATION_COLOR_GRADES[locationId] || LOCATION_COLOR_GRADES.default;
   }
 
   private setParticleType(particleType: 'dust' | 'incense' | 'smoke' | 'seaSpray' | undefined): void {
@@ -643,11 +785,20 @@ export class AtmosphereSystem {
 
   // Cleanup
   public destroy(): void {
+    // Remove event listeners
+    this.scene.events.off('hourChange');
+    this.scene.events.off('minuteChange');
+    this.scene.events.off('locationChange');
+    this.scene.events.off('weatherChange');
+
     if (this.lightingSystem) {
       this.lightingSystem.destroy();
     }
     if (this.ambientOverlay) {
       this.ambientOverlay.destroy();
+    }
+    if (this.colorGradeOverlay) {
+      this.colorGradeOverlay.destroy();
     }
     if (this.shadowLayer) {
       this.shadowLayer.destroy();

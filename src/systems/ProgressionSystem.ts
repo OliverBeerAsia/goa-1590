@@ -286,4 +286,13 @@ export class ProgressionSystem {
     this.totalTradesCompleted = 0;
     this.totalGoldEarned = 0;
   }
+
+  /**
+   * Clean up event listeners to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('goldChange');
+    this.scene.events.off('playerBuy');
+    this.scene.events.off('playerSell');
+  }
 }

@@ -960,4 +960,12 @@ export class QuestSystem {
 
     this.registerQuest(pepperContractQuest);
   }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.activeQuests.clear();
+    this.completedQuests.clear();
+  }
 }

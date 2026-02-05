@@ -328,8 +328,8 @@ export class BootScene extends Phaser.Scene {
       // Brief delay to show completed loading screen
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Transition to the main menu
-      this.scene.start('MainMenuScene');
+      // Transition to the intro sequence
+      this.scene.start('IntroScene');
     } catch (error) {
       console.error('BootScene: Asset generation failed:', error);
       // Show error on screen
@@ -444,6 +444,23 @@ export class BootScene extends Phaser.Scene {
     this.createPlanterTexture('tile_planter');
     this.createTextureAlias('tile_barrels', 'tile_barrel');
     this.createFountainTexture('tile_fountain');
+
+    // New Goa-specific tiles - Laterite red soil
+    this.createTextureAlias('tile_laterite_standard', 'tile_laterite_0');
+    this.createTextureAlias('tile_laterite_rocky', 'tile_laterite_1');
+    this.createTextureAlias('tile_laterite_dusty', 'tile_laterite_2');
+    this.createTextureAlias('tile_laterite_worn', 'tile_laterite_3');
+
+    // Calçada Portuguesa - Portuguese cobblestone
+    this.createTextureAlias('tile_calcada_wave', 'tile_calcada_0');
+    this.createTextureAlias('tile_calcada_checkerboard', 'tile_calcada_1');
+    this.createTextureAlias('tile_calcada_border', 'tile_calcada_2');
+
+    // Soft water tiles - more realistic muted palette
+    this.createTextureAlias('tile_soft_water_0', 'tile_soft_water');
+
+    // Ground-to-water edge for laterite
+    this.createTextureAlias('tile_laterite_water_edge', 'tile_laterite_shore');
   }
 
   private createTextureAlias(sourceKey: string, aliasKey: string): void {

@@ -333,4 +333,31 @@ export class AudioSystem {
   public toggleMute(): void {
     this.scene.sound.mute = !this.scene.sound.mute;
   }
+
+  /**
+   * Clean up event listeners and audio resources to prevent memory leaks
+   */
+  public destroy(): void {
+    // Remove event listeners
+    this.scene.events.off('periodChange');
+    this.scene.events.off('zoneEnter');
+    this.scene.events.off('openTrade');
+    this.scene.events.off('playerBuy');
+    this.scene.events.off('playerSell');
+
+    // Stop and clear current music
+    if (this.currentMusic) {
+      this.currentMusic.stop();
+      this.currentMusic = null;
+    }
+
+    // Stop and clear ambient sounds
+    this.ambientSounds.forEach((sound) => {
+      sound.stop();
+    });
+    this.ambientSounds.clear();
+
+    // Clear cooldown tracking
+    this.lastPlayedSfx.clear();
+  }
 }

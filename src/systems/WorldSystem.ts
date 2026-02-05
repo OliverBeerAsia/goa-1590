@@ -656,4 +656,12 @@ export class WorldSystem {
       factionTerritory: this.getCurrentFactionTerritory(),
     };
   }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.locations.clear();
+    this.currentLocation = null;
+  }
 }

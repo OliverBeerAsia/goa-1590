@@ -208,7 +208,14 @@ export class TimeSystem {
     const minuteStr = this.currentMinute.toString().padStart(2, '0');
     const ampm = this.currentHour >= 12 ? 'PM' : 'AM';
     const displayHour = this.currentHour > 12 ? this.currentHour - 12 : (this.currentHour === 0 ? 12 : this.currentHour);
-    
+
     return `${displayHour}:${minuteStr} ${ampm}`;
+  }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.isPaused = true;
   }
 }

@@ -345,4 +345,16 @@ export class NPCMemorySystem {
   public reset(): void {
     this.memories.clear();
   }
+
+  /**
+   * Clean up event listeners and data to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('npcInteraction');
+    this.scene.events.off('playerBuy');
+    this.scene.events.off('playerSell');
+    this.scene.events.off('questChoice');
+    this.scene.events.off('questCompleted');
+    this.memories.clear();
+  }
 }

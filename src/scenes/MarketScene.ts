@@ -16,6 +16,8 @@ import { ContractSystem } from '../systems/ContractSystem';
 import { NPCMemorySystem } from '../systems/NPCMemorySystem';
 import { TradeRouteSystem } from '../systems/TradeRouteSystem';
 import { AchievementSystem } from '../systems/AchievementSystem';
+import { ParticleSystem } from '../systems/ParticleSystem';
+import { PostProcessingSystem } from '../systems/PostProcessingSystem';
 
 // Import rich JSON quest files
 import pepperContractQuest from '../data/quests/the-pepper-contract.json';
@@ -44,6 +46,8 @@ export class MarketScene extends Phaser.Scene {
   private npcMemorySystem!: NPCMemorySystem;
   private tradeRouteSystem!: TradeRouteSystem;
   private achievementSystem!: AchievementSystem;
+  private particleSystem!: ParticleSystem;
+  private postProcessing!: PostProcessingSystem;
   private mapWidth = 40;
   private mapHeight = 30;
   private tileWidth = 64;  // 2x scale for Ultima 8 style
@@ -78,6 +82,21 @@ export class MarketScene extends Phaser.Scene {
     this.npcMemorySystem = new NPCMemorySystem(this);
     this.tradeRouteSystem = new TradeRouteSystem(this);
     this.achievementSystem = new AchievementSystem(this);
+    this.particleSystem = new ParticleSystem(this, {
+      enableDust: true,
+      enableFireflies: true,
+      maxDustParticles: 25,
+      maxFireflyParticles: 12,
+      dustSpawnRate: 1.5,
+    });
+    this.postProcessing = new PostProcessingSystem(this, {
+      enableScanlines: true,
+      scanlineOpacity: 0.02,   // Very subtle
+      scanlineSpacing: 4,      // Less frequent
+      enableVignette: false,   // AtmosphereSystem already has vignette
+      vignetteIntensity: 0,
+      vignetteRadius: 1,
+    });
     console.log('MarketScene: systems initialized');
 
     // Create water animation
@@ -256,43 +275,80 @@ export class MarketScene extends Phaser.Scene {
 
   /**
    * Create animated water texture from individual frames
+   * Includes soft water, harbor water, and shoreline animations
    */
   private createWaterAnimation(): void {
     try {
-      // Check if we have the water frame textures
-      const hasWaterFrames = this.textures.exists('tile_harbor_water_0') ||
-                             this.textures.exists('tile_water');
+      // Determine frame count (8 for high quality, 4 for low)
+      const frameCount = this.textures.exists('tile_soft_water_4') ? 8 :
+                         this.textures.exists('tile_harbor_water_4') ? 8 : 4;
 
-      if (!hasWaterFrames) {
-        console.warn('Water frame textures not found, skipping water animation');
-        return;
+      // Create soft water animation (preferred - more realistic)
+      if (!this.anims.exists('anim_soft_water')) {
+        const softFrames: Phaser.Types.Animations.AnimationFrame[] = [];
+        for (let i = 0; i < frameCount; i++) {
+          const key = `tile_soft_water_${i}`;
+          if (this.textures.exists(key)) {
+            softFrames.push({ key });
+          }
+        }
+        if (softFrames.length > 0) {
+          this.anims.create({
+            key: 'anim_soft_water',
+            frames: softFrames,
+            frameRate: 3, // Slower for softer effect
+            repeat: -1,
+          });
+          console.log('Created soft water animation with', softFrames.length, 'frames');
+        }
       }
 
-      // Create water animation if it doesn't exist
+      // Create harbor water animation (fallback)
       if (!this.anims.exists('anim_harbor_water')) {
-        // Try to use the harbor water frames first
-        const frames: Phaser.Types.Animations.AnimationFrame[] = [];
-
-        for (let i = 0; i < 4; i++) {
+        const harborFrames: Phaser.Types.Animations.AnimationFrame[] = [];
+        for (let i = 0; i < frameCount; i++) {
           const key = this.textures.exists(`tile_harbor_water_${i}`)
             ? `tile_harbor_water_${i}`
             : `tile_water_${i}`;
-
           if (this.textures.exists(key)) {
-            frames.push({ key });
+            harborFrames.push({ key });
           }
         }
-
-        if (frames.length > 0) {
+        if (harborFrames.length > 0) {
           this.anims.create({
             key: 'anim_harbor_water',
-            frames,
+            frames: harborFrames,
             frameRate: 4,
             repeat: -1,
           });
-          console.log('Created water animation with', frames.length, 'frames');
+          console.log('Created harbor water animation with', harborFrames.length, 'frames');
         }
       }
+
+      // Create shoreline animations for each edge direction
+      const edges = ['north', 'south', 'east', 'west', 'ne', 'nw', 'se', 'sw'];
+      for (const edge of edges) {
+        const animKey = `anim_shoreline_${edge}`;
+        if (!this.anims.exists(animKey)) {
+          const shoreFrames: Phaser.Types.Animations.AnimationFrame[] = [];
+          for (let i = 0; i < frameCount; i++) {
+            const key = `tile_shoreline_${edge}_${i}`;
+            if (this.textures.exists(key)) {
+              shoreFrames.push({ key });
+            }
+          }
+          if (shoreFrames.length > 0) {
+            this.anims.create({
+              key: animKey,
+              frames: shoreFrames,
+              frameRate: 3,
+              repeat: -1,
+            });
+          }
+        }
+      }
+
+      console.log('Water animations created successfully');
     } catch (e) {
       console.warn('Error creating water animation:', e);
     }
@@ -303,73 +359,93 @@ export class MarketScene extends Phaser.Scene {
     // 0 = ground, 1 = water, 2 = building, 3 = dock, 4 = market stall
     const mapData = this.generateMapData();
 
+    // First pass: identify shoreline positions (water adjacent to land)
+    const shorelineEdges = this.identifyShorelineEdges(mapData);
+
     // Render the map
     for (let y = 0; y < this.mapHeight; y++) {
       for (let x = 0; x < this.mapWidth; x++) {
         const tileType = mapData[y][x];
         const screenPos = this.isoToScreen(x, y);
-        
+
         let tileKey: string;
         let isWalkable = true;
         let isDecorative = false;
-        
+        let useAnimation = false;
+        let animKey = '';
+
         // Determine tile key based on type code
         if (tileType >= 0 && tileType <= 3) {
-          // Ground variants
-          tileKey = tileType === 0 ? 'tile_ground' : `tile_ground_${tileType}`;
+          // Ground - use location-appropriate tiles
+          tileKey = this.selectGroundTile(x, y, mapData);
         } else if (tileType === 100) {
-          // Water - will use animated sprite instead of static image
-          tileKey = 'tile_water';
+          // Water - use soft water with animation
+          tileKey = this.textures.exists('tile_soft_water_0') ? 'tile_soft_water_0' : 'tile_harbor_water_0';
           isWalkable = false;
+          useAnimation = true;
+          animKey = this.anims.exists('anim_soft_water') ? 'anim_soft_water' : 'anim_harbor_water';
         } else if (tileType >= 200 && tileType <= 202) {
           // Building variants
           const variant = tileType - 200;
           tileKey = variant === 0 ? 'tile_building' : `tile_building_${variant}`;
           isWalkable = false;
         } else if (tileType === 3) {
-          tileKey = 'tile_dock';
+          // Dock - use laterite for authentic Goa look
+          tileKey = this.textures.exists('tile_laterite_worn') ? 'tile_laterite_worn' : 'tile_dock';
         } else if (tileType >= 400 && tileType <= 403) {
           // Market stall variants
           const variant = tileType - 400;
           tileKey = variant === 0 ? 'tile_market' : `tile_market_${variant}`;
         } else if (tileType === 800) {
           // Palm tree - render ground first, then decorative
-          tileKey = 'tile_ground';
+          tileKey = this.selectGroundTile(x, y, mapData);
           isDecorative = true;
         } else if (tileType === 900) {
           // Well - render ground first, then decorative
-          tileKey = 'tile_ground';
+          tileKey = this.selectGroundTile(x, y, mapData);
           isDecorative = true;
         } else if (tileType === 1000) {
           // Crates - render ground first, then decorative
-          tileKey = 'tile_ground';
+          tileKey = this.selectGroundTile(x, y, mapData);
           isDecorative = true;
         } else if (tileType === 1100) {
           // Planter - render ground first, then decorative
-          tileKey = 'tile_ground';
+          tileKey = this.selectGroundTile(x, y, mapData);
           isDecorative = true;
         } else {
-          tileKey = 'tile_ground';
+          tileKey = this.selectGroundTile(x, y, mapData);
         }
 
-        // Render base tile - use sprite for water tiles to enable animation
-        if (tileType === 100 && this.anims.exists('anim_harbor_water')) {
-          // Create animated water sprite
-          const waterSprite = this.add.sprite(screenPos.x, screenPos.y, 'tile_water');
-          waterSprite.setOrigin(0.5, 0.5);
-          waterSprite.setDepth(y);
-          waterSprite.play('anim_harbor_water');
-          // Offset animation start for visual variety
-          waterSprite.anims.setProgress(((x + y) % 4) / 4);
-          this.waterTiles.push(waterSprite);
+        // Check if this is a shoreline position
+        const shoreKey = `${x},${y}`;
+        const shorelineEdge = shorelineEdges.get(shoreKey);
 
-          // Store tile data
-          waterSprite.setData('tileX', x);
-          waterSprite.setData('tileY', y);
-          waterSprite.setData('walkable', false);
+        if (shorelineEdge && tileType === 100) {
+          // Render shoreline tile instead of plain water
+          const shoreAnimKey = `anim_shoreline_${shorelineEdge}`;
+          const shoreTexKey = `tile_shoreline_${shorelineEdge}_0`;
+
+          if (this.anims.exists(shoreAnimKey) && this.textures.exists(shoreTexKey)) {
+            const shoreSprite = this.add.sprite(screenPos.x, screenPos.y, shoreTexKey);
+            shoreSprite.setOrigin(0.5, 0.5);
+            shoreSprite.setDepth(y);
+            shoreSprite.play(shoreAnimKey);
+            shoreSprite.anims.setProgress(((x + y) % 8) / 8);
+            this.waterTiles.push(shoreSprite);
+            shoreSprite.setData('tileX', x);
+            shoreSprite.setData('tileY', y);
+            shoreSprite.setData('walkable', false);
+          } else {
+            // Fallback to regular water
+            this.createWaterTile(screenPos, x, y, tileKey, animKey);
+          }
+        } else if (useAnimation && animKey) {
+          // Create animated water sprite
+          this.createWaterTile(screenPos, x, y, tileKey, animKey);
         } else {
-          // Regular static tile
-          const tile = this.add.image(screenPos.x, screenPos.y, tileKey);
+          // Regular static tile - verify texture exists
+          const finalKey = this.textures.exists(tileKey) ? tileKey : 'tile_ground';
+          const tile = this.add.image(screenPos.x, screenPos.y, finalKey);
           tile.setOrigin(0.5, 0.5);
           tile.setDepth(y);
 
@@ -378,7 +454,7 @@ export class MarketScene extends Phaser.Scene {
           tile.setData('tileY', y);
           tile.setData('walkable', isWalkable);
         }
-        
+
         // Render decorative elements on top
         if (isDecorative) {
           let decorKey: string;
@@ -386,7 +462,7 @@ export class MarketScene extends Phaser.Scene {
           else if (tileType === 900) decorKey = 'tile_well';
           else if (tileType === 1000) decorKey = 'tile_crates';
           else decorKey = 'tile_planter';
-          
+
           const decor = this.add.image(screenPos.x, screenPos.y - 8, decorKey);
           decor.setOrigin(0.5, 1);
           decor.setDepth(y + 50);
@@ -407,6 +483,151 @@ export class MarketScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  /**
+   * Create an animated water tile
+   */
+  private createWaterTile(
+    screenPos: { x: number; y: number },
+    tileX: number,
+    tileY: number,
+    textureKey: string,
+    animKey: string
+  ): void {
+    const finalTexture = this.textures.exists(textureKey) ? textureKey : 'tile_harbor_water_0';
+    const waterSprite = this.add.sprite(screenPos.x, screenPos.y, finalTexture);
+    waterSprite.setOrigin(0.5, 0.5);
+    waterSprite.setDepth(tileY);
+
+    if (this.anims.exists(animKey)) {
+      waterSprite.play(animKey);
+      // Offset animation start for visual variety - use more variation
+      waterSprite.anims.setProgress(((tileX * 7 + tileY * 13) % 8) / 8);
+    }
+
+    this.waterTiles.push(waterSprite);
+    waterSprite.setData('tileX', tileX);
+    waterSprite.setData('tileY', tileY);
+    waterSprite.setData('walkable', false);
+  }
+
+  /**
+   * Identify shoreline edges where water meets land
+   * Returns a map of "x,y" -> edge direction
+   */
+  private identifyShorelineEdges(mapData: number[][]): Map<string, string> {
+    const edges = new Map<string, string>();
+
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        if (mapData[y][x] !== 100) continue; // Only check water tiles
+
+        const hasLandNorth = y > 0 && mapData[y - 1][x] !== 100;
+        const hasLandSouth = y < this.mapHeight - 1 && mapData[y + 1][x] !== 100;
+        const hasLandEast = x < this.mapWidth - 1 && mapData[y][x + 1] !== 100;
+        const hasLandWest = x > 0 && mapData[y][x - 1] !== 100;
+
+        // Determine edge type - prioritize cardinal directions
+        let edge = '';
+        if (hasLandEast && !hasLandWest && !hasLandNorth && !hasLandSouth) {
+          edge = 'east';
+        } else if (hasLandWest && !hasLandEast && !hasLandNorth && !hasLandSouth) {
+          edge = 'west';
+        } else if (hasLandNorth && !hasLandSouth && !hasLandEast && !hasLandWest) {
+          edge = 'north';
+        } else if (hasLandSouth && !hasLandNorth && !hasLandEast && !hasLandWest) {
+          edge = 'south';
+        } else if (hasLandNorth && hasLandEast) {
+          edge = 'ne';
+        } else if (hasLandNorth && hasLandWest) {
+          edge = 'nw';
+        } else if (hasLandSouth && hasLandEast) {
+          edge = 'se';
+        } else if (hasLandSouth && hasLandWest) {
+          edge = 'sw';
+        } else if (hasLandEast) {
+          edge = 'east';
+        }
+
+        if (edge) {
+          edges.set(`${x},${y}`, edge);
+        }
+      }
+    }
+
+    return edges;
+  }
+
+  /**
+   * Select appropriate ground tile based on position
+   * Uses primarily cobblestone with laterite for docks and occasional calçada accents
+   */
+  private selectGroundTile(x: number, y: number, mapData: number[][]): string {
+    // Position-based hash for consistent variation
+    const hash = Math.abs((x * 73856093) ^ (y * 19349663));
+
+    // Check if near a building (calçada only appears near prestigious buildings)
+    const nearBuilding = this.isNearBuilding(x, y, mapData);
+
+    // Dock area (x: 5-8) - use laterite (red Goan soil)
+    if (x >= 5 && x <= 8) {
+      const variants = ['tile_laterite_standard', 'tile_laterite_worn', 'tile_laterite_dusty', 'tile_laterite_rocky'];
+      const variantIdx = hash % variants.length;
+      const key = variants[variantIdx];
+      return this.textures.exists(key) ? key : 'tile_cobble_worn';
+    }
+
+    // Transition zone near docks - mix of laterite and cobblestone
+    if (x >= 9 && x <= 11) {
+      const variants = ['tile_laterite_rocky', 'tile_laterite_dusty', 'tile_cobble_worn', 'tile_cobble_mossy'];
+      const variantIdx = hash % variants.length;
+      const key = variants[variantIdx];
+      return this.textures.exists(key) ? key : 'tile_ground';
+    }
+
+    // Market center - primarily cobblestone, calçada only directly adjacent to buildings
+    if (x >= 12 && x <= 28 && y >= 4 && y <= 26) {
+      // Only use calçada if directly adjacent to a building (within 1 tile)
+      if (nearBuilding && (hash % 3 === 0)) {
+        const calcadaVariants = ['tile_calcada_wave', 'tile_calcada_border'];
+        const key = calcadaVariants[hash % calcadaVariants.length];
+        return this.textures.exists(key) ? key : 'tile_cobble_worn';
+      }
+
+      // Most of market uses weathered cobblestone
+      const variants = ['tile_cobble_worn', 'tile_cobble_worn', 'tile_cobble_mossy', 'tile_cobble_new'];
+      const variantIdx = hash % variants.length;
+      const key = variants[variantIdx];
+      return this.textures.exists(key) ? key : 'tile_ground';
+    }
+
+    // Edges of map - laterite (natural Goan soil)
+    const variants = ['tile_laterite_standard', 'tile_laterite_rocky', 'tile_laterite_dusty', 'tile_cobble_worn'];
+    const variantIdx = hash % variants.length;
+    const key = variants[variantIdx];
+    return this.textures.exists(key) ? key : 'tile_ground';
+  }
+
+  /**
+   * Check if a tile position is adjacent to a building
+   */
+  private isNearBuilding(x: number, y: number, mapData: number[][]): boolean {
+    const checkRadius = 2;
+    for (let dy = -checkRadius; dy <= checkRadius; dy++) {
+      for (let dx = -checkRadius; dx <= checkRadius; dx++) {
+        const checkY = y + dy;
+        const checkX = x + dx;
+        if (checkY >= 0 && checkY < this.mapHeight && checkX >= 0 && checkX < this.mapWidth) {
+          const tile = mapData[checkY][checkX];
+          // Building tiles are 200-202
+          if (tile >= 200 && tile <= 202) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private generateMapData(): number[][] {
@@ -564,15 +785,21 @@ export class MarketScene extends Phaser.Scene {
     const mapWidthPixels = (this.mapWidth + this.mapHeight) * (this.tileWidth / 2);
     const mapHeightPixels = (this.mapWidth + this.mapHeight) * (this.tileHeight / 2);
 
+    // Calculate proper bounds for isometric map
+    // Center of map in isometric coords at (mapWidth/2, mapHeight/2)
+    const centerX = this.cameras.main.width / 2;
+    const minX = centerX - mapWidthPixels;
+    const maxX = centerX + mapWidthPixels;
+
     this.cameras.main.setBounds(
-      -mapWidthPixels / 2,
-      0,
-      mapWidthPixels * 1.5,
-      mapHeightPixels + 200
+      minX,
+      -100,
+      maxX - minX,
+      mapHeightPixels + 400
     );
 
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    this.cameras.main.setZoom(2); // Zoom in for pixel art clarity
+    this.cameras.main.setZoom(1.5); // Slightly zoomed for pixel art clarity while fitting viewport
   }
 
   private setupInput(): void {
@@ -599,6 +826,7 @@ export class MarketScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-F9', () => {
       const saveData = this.saveSystem.load('autosave');
       if (saveData) {
+        this.applySaveData(saveData);
         this.events.emit('notification', { title: 'Game Loaded', message: 'Save loaded.' });
       } else {
         this.events.emit('notification', { title: 'No Save', message: 'No save data found.' });
@@ -832,8 +1060,21 @@ export class MarketScene extends Phaser.Scene {
     this.isTransitioning = true;
     this.input.enabled = false; // Disable input during transition
 
+    // Close any open dialogue before transitioning
+    if (this.dialogueSystem?.isDialogueActive?.()) {
+      this.dialogueSystem.endDialogue();
+    }
+
     // Fade out effect
     this.cameras.main.fadeOut(500, 0, 0, 0);
+
+    // Show loading indicator during transition
+    const loadingText = this.add.text(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2,
+      `Travelling to ${this.getLocationDisplayName(targetLocation)}...`,
+      { fontSize: '18px', color: '#c9a227', fontFamily: 'Georgia' }
+    ).setOrigin(0.5).setDepth(20000).setScrollFactor(0);
 
     this.cameras.main.once('camerafadeoutcomplete', () => {
       // Change location in world system
@@ -858,10 +1099,11 @@ export class MarketScene extends Phaser.Scene {
       this.cameras.main.once('camerafadeincomplete', () => {
         this.isTransitioning = false;
         this.input.enabled = true;
+        loadingText.destroy();
       });
     });
   }
-  
+
   private getLocationDisplayName(locationId: string): string {
     const names: { [key: string]: string } = {
       'ribeira_grande': 'Ribeira Grande - The Great Waterfront',
@@ -937,60 +1179,85 @@ export class MarketScene extends Phaser.Scene {
   private getTileForLocation(locationId: string, x: number, y: number): string {
     switch (locationId) {
       case 'docks':
-        // Docks: lots of water, wooden platforms
+        // Docks: lots of water, wooden platforms, laterite ground
         if (y < 10) return `W${x % 4}`;
         if (y < 12) return 'D';
         if (x < 8 || x > 32) return `W${x % 4}`;
-        return `G${(x + y) % 4}`;
-        
+        // Laterite ground for docks area
+        return `L${(x + y) % 4}`;
+
       case 'alfandega':
-        // Customs house: formal building, stone floor
+        // Customs house: formal building, Calçada floor (wealthy area)
         if (x < 5 || x > 35 || y < 5 || y > 25) return `B${x % 3}`;
-        return `G${(x + y) % 4}`;
-        
+        // Prestigious Calçada Portuguesa floor inside
+        return `C${(x + y) % 3}`;
+
       case 'se_cathedral':
-        // Cathedral: under construction, scaffolding, stone
+        // Cathedral: under construction, stone floor with Calçada
         if (x > 15 && x < 25 && y > 10 && y < 20) return `B${x % 3}`;
         if ((x + y) % 7 === 0) return 'R';
-        return `G${(x + y) % 4}`;
-        
+        // Mix of Calçada and laterite
+        if (x > 10 && x < 30) return `C${(x + y) % 3}`;
+        return `L${(x + y) % 4}`;
+
       case 'old_quarter':
-        // Residential: narrow streets, many buildings
+        // Residential: narrow streets, laterite ground (poorer area)
         if ((x % 6 < 3 && y % 5 < 3) || (x % 8 === 0)) return `B${x % 3}`;
-        return `G${(x + y) % 4}`;
-        
+        // Laterite soil streets
+        return `L${(x + y) % 4}`;
+
       case 'tavern':
         // Tavern interior: wooden floor, dim
         if (x < 5 || x > 35 || y < 5 || y > 25) return `B${x % 3}`;
         return 'D';
-        
+
       case 'warehouse_district':
-        // Warehouses: lots of crates, dock tiles
+        // Warehouses: crates, dock tiles, laterite
         if (y < 5 || y > 25) return `B${x % 3}`;
         if ((x + y) % 5 === 0) return 'D';
-        return `G${(x + y) % 4}`;
-        
+        return `L${(x + y) % 4}`;
+
       default: // ribeira_grande - default market
         return this.getDefaultMarketTile(x, y);
     }
   }
   
   private getDefaultMarketTile(x: number, y: number): string {
-    // Water along left edge
-    if (x < 6) return `W${(x + y) % 4}`;
-    // Dock area
+    // Deep water (far left)
+    if (x < 4) return `W${(x + y) % 4}`;
+
+    // Shoreline transition zone - where water meets land
+    if (x === 4) return `Sw`; // West shoreline edge
+    if (x === 5) return `Ssw`; // Southwest transition
+
+    // Dock wooden platforms
     if (x >= 6 && x < 8) return 'D';
+
     // Buildings along right side
     if (x > 32) return `B${x % 3}`;
     // Roofs above buildings
     if (x > 34 && y % 4 < 2) return 'R';
-    // Market stall zones
+
+    // Market stall zones - fancy Calçada floor (wealthy trading area)
     if (x >= 14 && x <= 16 && y >= 6 && y <= 18) return `M${0}`;
     if (x >= 18 && x <= 20 && y >= 6 && y <= 18) return `M${1}`;
     if (x >= 22 && x <= 24 && y >= 6 && y <= 18) return `M${2}`;
     if (x >= 26 && x <= 28 && y >= 6 && y <= 18) return `M${3}`;
-    // Default ground
-    return `G${(x + y) % 4}`;
+
+    // Main market area with Calçada Portuguesa (prestigious cobblestone)
+    if (x >= 12 && x <= 30 && y >= 4 && y <= 20) {
+      return `C${(x + y) % 3}`;
+    }
+
+    // Transition from Calçada to Laterite around market edges
+    if (x >= 10 && x <= 32 && y >= 2 && y <= 22) {
+      // Mix of Calçada border and laterite
+      if ((x + y) % 4 === 0) return `C2`; // Border Calçada
+      return `L${(x + y) % 4}`;
+    }
+
+    // Default red laterite soil (authentic Goan ground)
+    return `L${(x + y) % 4}`;
   }
   
   private createIsometricMapFromData(mapData: string[][]): void {
@@ -1009,31 +1276,111 @@ export class MarketScene extends Phaser.Scene {
     const variant = parseInt(code.charAt(1)) || 0;
 
     let textureKey = 'tile_ground_0';
+    let isAnimated = false;
+    let animKey = '';
 
     switch (type) {
+      // Original tile types
       case 'G': textureKey = `tile_ground_${variant}`; break;
-      case 'W': textureKey = `tile_water_${variant}`; break;
       case 'B': textureKey = `tile_building_${variant}`; break;
       case 'D': textureKey = 'tile_dock'; break;
       case 'R': textureKey = 'tile_roof'; break;
       case 'M': textureKey = `tile_market_${variant}`; break;
-      default: textureKey = 'tile_ground_0';
+
+      // Water - use soft water if available
+      case 'W':
+        if (this.anims.exists('anim_soft_water')) {
+          isAnimated = true;
+          textureKey = 'tile_soft_water_0';
+          animKey = 'anim_soft_water';
+        } else if (this.anims.exists('anim_harbor_water')) {
+          isAnimated = true;
+          textureKey = 'tile_harbor_water_0';
+          animKey = 'anim_harbor_water';
+        } else {
+          textureKey = `tile_water_${variant}`;
+        }
+        break;
+
+      // New Goa-specific tiles
+      case 'L':
+        // Laterite - red Goan soil
+        const lateriteVariants = ['standard', 'rocky', 'dusty', 'worn'];
+        const lateriteVar = lateriteVariants[variant % lateriteVariants.length];
+        textureKey = `tile_laterite_${lateriteVar}`;
+        // Fallback to dirt if laterite not available
+        if (!this.textures.exists(textureKey)) {
+          textureKey = `tile_dirt_packed`;
+        }
+        break;
+
+      case 'C':
+        // Calçada Portuguesa - Portuguese cobblestone
+        const calcadaVariants = ['wave', 'checkerboard', 'border'];
+        const calcadaVar = calcadaVariants[variant % calcadaVariants.length];
+        textureKey = `tile_calcada_${calcadaVar}`;
+        // Fallback to cobblestone if calcada not available
+        if (!this.textures.exists(textureKey)) {
+          textureKey = 'tile_cobble_new';
+        }
+        break;
+
+      case 'S':
+        // Shoreline tiles
+        const edgeCode = code.substring(1).toLowerCase();
+        const shorelineEdge = this.parseShorelineEdge(edgeCode);
+        if (this.anims.exists(`anim_shoreline_${shorelineEdge}`)) {
+          isAnimated = true;
+          textureKey = `tile_shoreline_${shorelineEdge}_0`;
+          animKey = `anim_shoreline_${shorelineEdge}`;
+        } else {
+          // Fallback: draw laterite with water edge
+          textureKey = this.textures.exists('tile_laterite_water_edge')
+            ? 'tile_laterite_water_edge'
+            : 'tile_cobble_water_edge';
+        }
+        break;
+
+      default:
+        textureKey = 'tile_ground_0';
     }
 
-    // Use animated sprite for water tiles
-    if (type === 'W' && this.anims.exists('anim_harbor_water')) {
-      const waterSprite = this.add.sprite(screenX, screenY, 'tile_water');
-      waterSprite.setOrigin(0.5, 0.5);
-      waterSprite.setDepth(tileY);
-      waterSprite.play('anim_harbor_water');
+    // Create the tile - animated or static
+    if (isAnimated && this.anims.exists(animKey)) {
+      const sprite = this.add.sprite(screenX, screenY, textureKey);
+      sprite.setOrigin(0.5, 0.5);
+      sprite.setDepth(tileY);
+      sprite.play(animKey);
       // Offset animation start for visual variety
-      waterSprite.anims.setProgress(((tileX + tileY) % 4) / 4);
-      this.waterTiles.push(waterSprite);
+      sprite.anims.setProgress(((tileX + tileY) % 4) / 4);
+      this.waterTiles.push(sprite);
     } else {
+      // Try to create the tile, with fallback
+      if (!this.textures.exists(textureKey)) {
+        console.warn(`Texture not found: ${textureKey}, using fallback`);
+        textureKey = 'tile_ground_0';
+      }
       const tile = this.add.image(screenX, screenY, textureKey);
       tile.setOrigin(0.5, 0.5);
       tile.setDepth(tileY);
     }
+  }
+
+  /**
+   * Parse shoreline edge code to edge type
+   */
+  private parseShorelineEdge(code: string): string {
+    const edgeMap: { [key: string]: string } = {
+      'n': 'north',
+      's': 'south',
+      'e': 'east',
+      'w': 'west',
+      'ne': 'ne',
+      'nw': 'nw',
+      'se': 'se',
+      'sw': 'sw',
+    };
+    return edgeMap[code] || 'west';
   }
   
   private createNPCsForLocation(locationId: string): void {
@@ -1275,6 +1622,10 @@ export class MarketScene extends Phaser.Scene {
     this.atmosphereSystem.update(delta);
     this.eventSystem.update(delta);
     this.tradeSystem.update(time);
+    this.particleSystem.update(delta);
+
+    // Sync particle system with time
+    this.particleSystem.setHour(this.timeSystem.getTimeData().hour);
 
     // Render dynamic shadows for entities
     const entities = [
@@ -1327,6 +1678,16 @@ export class MarketScene extends Phaser.Scene {
    * Clean up resources when scene is shut down
    */
   shutdown(): void {
+    // Clean up particle system
+    if (this.particleSystem) {
+      this.particleSystem.destroy();
+    }
+
+    // Clean up post-processing
+    if (this.postProcessing) {
+      this.postProcessing.destroy();
+    }
+
     // Clean up water tiles
     for (const tile of this.waterTiles) {
       if (tile && tile.active) {
@@ -1343,6 +1704,15 @@ export class MarketScene extends Phaser.Scene {
     }
     this.npcs = [];
 
+    // Remove keyboard event listeners
+    this.input.keyboard?.off('keydown-E');
+    this.input.keyboard?.off('keydown-ENTER');
+    this.input.keyboard?.off('keydown-F5');
+    this.input.keyboard?.off('keydown-F9');
+
+    // Remove input event listeners
+    this.input.off('pointerdown');
+
     // Unsubscribe from events to prevent memory leaks
     this.events.off('requestLocationChange');
     this.events.off('ship_arrival');
@@ -1355,6 +1725,26 @@ export class MarketScene extends Phaser.Scene {
     this.events.off('questStageAdvanced');
     this.events.off('questCompleted');
     this.events.off('requestSaveData');
+
+    // Destroy all systems
+    if (this.timeSystem?.destroy) this.timeSystem.destroy();
+    if (this.weatherSystem?.destroy) this.weatherSystem.destroy();
+    if (this.atmosphereSystem?.destroy) this.atmosphereSystem.destroy();
+    if (this.worldSystem?.destroy) this.worldSystem.destroy();
+    if (this.factionSystem?.destroy) this.factionSystem.destroy();
+    if (this.questSystem?.destroy) this.questSystem.destroy();
+    if (this.saveSystem?.destroy) this.saveSystem.destroy();
+    if (this.eventSystem?.destroy) this.eventSystem.destroy();
+    if (this.dialogueSystem?.destroy) this.dialogueSystem.destroy();
+    if (this.tradeSystem?.destroy) this.tradeSystem.destroy();
+    if (this.progressionSystem?.destroy) this.progressionSystem.destroy();
+    if (this.contractSystem?.destroy) this.contractSystem.destroy();
+    if (this.npcMemorySystem?.destroy) this.npcMemorySystem.destroy();
+    if (this.tradeRouteSystem?.destroy) this.tradeRouteSystem.destroy();
+    if (this.achievementSystem?.destroy) this.achievementSystem.destroy();
+
+    // Destroy player
+    if (this.player?.destroy) this.player.destroy();
 
     // Clear registry references
     this.registry.remove('worldSystem');

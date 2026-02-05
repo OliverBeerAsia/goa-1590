@@ -474,4 +474,12 @@ export class TradeRouteSystem {
       stats: this.getStats(),
     });
   }
+
+  /**
+   * Clean up event listeners and data to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('hourChange');
+    this.activeExpeditions.clear();
+  }
 }

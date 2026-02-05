@@ -375,7 +375,7 @@ export const GRASS: ColorRamp = {
   deep: 0x1a2808,
 };
 
-// Water colors
+// Water colors - Original vibrant palette
 export const WATER_HARBOR: ColorRamp = {
   highlight: 0x80c0e0,
   base: 0x4a8ab0,
@@ -395,6 +395,32 @@ export const WATER_RIVER: ColorRamp = {
   base: 0x4080a0,
   shadow: 0x306080,
   deep: 0x204060,
+};
+
+/**
+ * Softer, more muted water palettes for realistic rendering
+ * Historical context: The Mandovi River and Arabian Sea have a distinct
+ * blue-green tint from tropical sediments and monsoon waters
+ */
+export const WATER_SOFT: ColorRamp = {
+  highlight: 0x8fb8c8,  // Muted sky reflection
+  base: 0x5a8a9a,       // Soft teal-blue
+  shadow: 0x3a6a7a,     // Deeper muted blue
+  deep: 0x2a4a5a,       // Dark but not harsh
+};
+
+export const WATER_SHALLOW: ColorRamp = {
+  highlight: 0xa8d0d8,  // Bright shallow areas
+  base: 0x78a8b8,       // Sandy bottom showing through
+  shadow: 0x588898,     // Transition to deeper
+  deep: 0x3a6878,       // Edge of shallow area
+};
+
+export const WATER_FOAM: ColorRamp = {
+  highlight: 0xffffff,  // Pure white foam
+  base: 0xe8f4f8,       // Aerated water
+  shadow: 0xc8dce4,     // Dissipating foam
+  deep: 0xa8c4d0,       // Foam edge
 };
 
 // Building materials
@@ -1700,6 +1726,106 @@ export function generateLateritePattern(options: PatternOptions): RGBA[][] {
 }
 
 /**
+ * Generates a Calçada Portuguesa (Portuguese Cobblestone) pattern
+ *
+ * Historical context: The iconic black and white wave patterns of
+ * Portuguese pavement were used in prestigious areas of Goa. The
+ * distinctive design symbolized Portuguese imperial presence.
+ *
+ * @param options - Pattern generation options
+ * @param useWavePattern - Use traditional wave pattern vs simple grid
+ */
+export function generateCalcadaPattern(
+  options: PatternOptions,
+  useWavePattern: boolean = true
+): RGBA[][] {
+  const { width, height, scale = 4, variation = 0.1, seed = 88888 } = options;
+  const random = new SeededRandom(seed);
+  const result: RGBA[][] = [];
+
+  // SUBTLE Calçada colors - warm stone tones, not stark black/white
+  // Weathered limestone and aged gray stone, not harsh contrast
+  const lightStone: RGBA = { r: 215, g: 205, b: 190, a: 255 };  // Warm weathered limestone
+  const darkStone: RGBA = { r: 145, g: 135, b: 125, a: 255 };   // Aged gray stone (not black!)
+  const mortarColor: RGBA = { r: 175, g: 165, b: 150, a: 255 }; // Subtle mortar
+
+  for (let y = 0; y < height; y++) {
+    const row: RGBA[] = [];
+    for (let x = 0; x < width; x++) {
+      // Calculate stone grid position - larger scale for subtler pattern
+      const stoneX = Math.floor(x / scale);
+      const stoneY = Math.floor(y / scale);
+      const localX = x % scale;
+      const localY = y % scale;
+
+      // Check if we're at a mortar line - very subtle, only 1 pixel
+      const isMortar = (localX === 0 || localY === 0) && scale > 2;
+
+      if (isMortar) {
+        // Blend mortar with surrounding stone for subtlety
+        const blendedMortar = { ...mortarColor };
+        blendedMortar.r += Math.round((random.next() - 0.5) * 10);
+        blendedMortar.g += Math.round((random.next() - 0.5) * 10);
+        blendedMortar.b += Math.round((random.next() - 0.5) * 10);
+        row.push(blendedMortar);
+        continue;
+      }
+
+      // Determine stone color based on pattern - with noise for natural look
+      let useDark: boolean;
+      const noiseVal = random.next();
+
+      if (useWavePattern) {
+        // Subtle wave pattern - gentler curves
+        const wavePhase = (stoneX * 0.5 + Math.sin(stoneY * 0.3) * 1.5);
+        const waveValue = Math.sin(wavePhase * 0.4);
+        // Add noise to prevent harsh transitions
+        useDark = waveValue + (noiseVal - 0.5) * 0.3 > 0;
+      } else {
+        // Soft checkerboard with noise
+        const basePattern = (stoneX + stoneY) % 2 === 0;
+        // Occasionally flip for natural randomness
+        useDark = noiseVal > 0.85 ? !basePattern : basePattern;
+      }
+
+      // Add per-stone variation - more significant for natural look
+      const stoneVariation = (random.next() - 0.5) * variation * 2;
+
+      // Select base color and blend toward center for subtlety
+      const baseColor = useDark ? darkStone : lightStone;
+      const midColor: RGBA = { r: 180, g: 170, b: 158, a: 255 }; // Mid-tone
+
+      // Blend base color toward mid for reduced contrast
+      const blendFactor = 0.25 + random.next() * 0.15; // Blend 25-40% toward mid
+      let color: RGBA = {
+        r: Math.round(baseColor.r * (1 - blendFactor) + midColor.r * blendFactor),
+        g: Math.round(baseColor.g * (1 - blendFactor) + midColor.g * blendFactor),
+        b: Math.round(baseColor.b * (1 - blendFactor) + midColor.b * blendFactor),
+        a: 255,
+      };
+
+      // Apply natural variation
+      color.r = Math.max(100, Math.min(230, color.r + Math.round(stoneVariation * 20)));
+      color.g = Math.max(90, Math.min(220, color.g + Math.round(stoneVariation * 20)));
+      color.b = Math.max(80, Math.min(210, color.b + Math.round(stoneVariation * 18)));
+
+      // Add subtle wear marks
+      if (random.next() > 0.88) {
+        const wearAmount = 0.05 + random.next() * 0.1;
+        color.r = Math.round(color.r * (1 - wearAmount) + mortarColor.r * wearAmount);
+        color.g = Math.round(color.g * (1 - wearAmount) + mortarColor.g * wearAmount);
+        color.b = Math.round(color.b * (1 - wearAmount) + mortarColor.b * wearAmount);
+      }
+
+      row.push(color);
+    }
+    result.push(row);
+  }
+
+  return result;
+}
+
+/**
  * Generates a terracotta roof tile pattern
  *
  * Historical context: Portuguese colonial buildings in Goa featured
@@ -1898,6 +2024,9 @@ export const GoaPalette = {
     WATER_HARBOR,
     WATER_DEEP,
     WATER_RIVER,
+    WATER_SOFT,
+    WATER_SHALLOW,
+    WATER_FOAM,
     WHITEWASH,
     TERRACOTTA,
     WOOD_DARK,
@@ -1965,6 +2094,7 @@ export const GoaPalette = {
     generateWaterRipplePattern,
     generateLateritePattern,
     generateRoofTilePattern,
+    generateCalcadaPattern,
     patternToColorInts,
     patternToImageData,
   },

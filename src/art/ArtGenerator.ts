@@ -136,10 +136,51 @@ interface QualityConfig {
   transitionTiles: boolean;
   /** Include decoration tiles */
   decorationTiles: boolean;
+
+  // === Visual Enhancement Flags (Phase 1: Weeks 2-4) ===
+
+  /** Use pattern textures (stone, wood, fabric from palette.ts generators) */
+  usePatternTextures: boolean;
+  /** Use Bayer dithering for smooth transitions */
+  useDithering: boolean;
+  /** Apply ambient occlusion to tile/building edges */
+  useAmbientOcclusion: boolean;
+  /** Apply weathering effects (moss, stains) to buildings */
+  useWeathering: boolean;
+  /** Use 5-level extended color ramps for shading */
+  use5LevelShading: boolean;
+  /** Add Portuguese azulejo tile accents to buildings */
+  useAzulejoTiles: boolean;
+
+  // === Visual Enhancement Flags (Phase 2: Ultima 8-Quality) ===
+
+  /** Draw 1-pixel dark outline around character sprites for readability */
+  useCharacterOutline: boolean;
+  /** Apply rim lighting for dramatic depth based on time of day */
+  useRimLighting: boolean;
+  /** Apply ambient occlusion at body joints (neck, shoulders, hips) */
+  useJointAO: boolean;
+  /** Number of pixels for shadow feathering (0 = none, 2-4 for quality) */
+  shadowFeatherPixels: number;
+  /** Apply fabric textures (silk, cotton, linen, wool) to clothing */
+  useFabricTexture: boolean;
+  /** Number of water animation frames (4 low, 6 medium, 8 high) */
+  waterAnimationFrames: number;
+  /** Enable enhanced shoreline foam effects */
+  useShorelineFoam: boolean;
+  /** Enable sky reflection on water surfaces */
+  useSkyReflection: boolean;
 }
 
 /**
  * Quality presets
+ *
+ * Visual enhancement flags control features added in Weeks 2-4 (Phase 1)
+ * and Phase 2 Ultima 8-Quality enhancements:
+ *
+ * - LOW: Minimal graphics for best performance (no patterns, basic rendering)
+ * - MEDIUM: Balanced quality with patterns, AO, rim lighting, 6-frame water
+ * - HIGH: Full visual quality with all enhancements, 8-frame water, fabric textures
  */
 const QUALITY_CONFIGS: Record<QualityLevel, QualityConfig> = {
   low: {
@@ -152,6 +193,22 @@ const QUALITY_CONFIGS: Record<QualityLevel, QualityConfig> = {
     allTileVariants: false,
     transitionTiles: false,
     decorationTiles: false,
+    // Phase 1 visual enhancement flags - all disabled for low quality
+    usePatternTextures: false,
+    useDithering: false,
+    useAmbientOcclusion: false,
+    useWeathering: false,
+    use5LevelShading: false,
+    useAzulejoTiles: false,
+    // Phase 2 visual enhancement flags - minimal features
+    useCharacterOutline: true,  // Outline at all levels for readability
+    useRimLighting: false,
+    useJointAO: false,
+    shadowFeatherPixels: 0,
+    useFabricTexture: false,
+    waterAnimationFrames: 4,
+    useShorelineFoam: false,
+    useSkyReflection: false,
   },
   medium: {
     skinVariations: 2,
@@ -163,6 +220,22 @@ const QUALITY_CONFIGS: Record<QualityLevel, QualityConfig> = {
     allTileVariants: true,
     transitionTiles: true,
     decorationTiles: false,
+    // Phase 1 visual enhancement flags - most enabled except dithering
+    usePatternTextures: true,
+    useDithering: false,
+    useAmbientOcclusion: true,
+    useWeathering: true,
+    use5LevelShading: true,
+    useAzulejoTiles: true,
+    // Phase 2 visual enhancement flags - moderate features
+    useCharacterOutline: true,
+    useRimLighting: true,
+    useJointAO: false,
+    shadowFeatherPixels: 2,
+    useFabricTexture: false,
+    waterAnimationFrames: 6,
+    useShorelineFoam: true,
+    useSkyReflection: false,
   },
   high: {
     skinVariations: 3,
@@ -174,6 +247,22 @@ const QUALITY_CONFIGS: Record<QualityLevel, QualityConfig> = {
     allTileVariants: true,
     transitionTiles: true,
     decorationTiles: true,
+    // Phase 1 visual enhancement flags - all enabled for maximum quality
+    usePatternTextures: true,
+    useDithering: true,
+    useAmbientOcclusion: true,
+    useWeathering: true,
+    use5LevelShading: true,
+    useAzulejoTiles: true,
+    // Phase 2 visual enhancement flags - all features enabled
+    useCharacterOutline: true,
+    useRimLighting: true,
+    useJointAO: true,
+    shadowFeatherPixels: 4,
+    useFabricTexture: true,
+    waterAnimationFrames: 8,
+    useShorelineFoam: true,
+    useSkyReflection: true,
   },
 };
 
@@ -229,10 +318,11 @@ export class ArtGenerator {
 
     this.qualityConfig = QUALITY_CONFIGS[this.config.quality];
 
-    // Initialize sub-generators with shared seed
-    this.tileGenerator = new TileGenerator(scene, this.config.seed);
-    this.characterGenerator = new CharacterGenerator(scene);
-    this.buildingGenerator = new BuildingGenerator(scene);
+    // Initialize sub-generators with shared seed and quality level
+    // Each generator now supports quality-based visual enhancement flags
+    this.tileGenerator = new TileGenerator(scene, this.config.seed, this.config.quality);
+    this.characterGenerator = new CharacterGenerator(scene, this.config.quality);
+    this.buildingGenerator = new BuildingGenerator(scene, this.config.quality);
     this.uiGenerator = new UIGenerator(scene);
 
     this.log(`ArtGenerator initialized with quality: ${this.config.quality}, seed: ${this.config.seed}`);
@@ -1023,16 +1113,20 @@ export class ArtGenerator {
 
   /**
    * Register water animations
+   * Phase 2: Dynamic frame count based on quality settings
    */
   private registerWaterAnimations(): void {
+    const frameCount = this.qualityConfig.waterAnimationFrames;
+    const frameEnd = frameCount - 1;
+
     // Harbor water animation
     const harborFrames = this.tileGenerator.getWaterAnimationKeys('harbor');
     this.animations.push({
       key: 'anim_harbor_water',
       textureKey: harborFrames[0],
       frameStart: 0,
-      frameEnd: 3,
-      frameRate: 4,
+      frameEnd: frameEnd,
+      frameRate: frameCount >= 8 ? 6 : 4, // Faster for more frames to maintain smooth feel
       repeat: -1,
     });
 
@@ -1042,8 +1136,8 @@ export class ArtGenerator {
       key: 'anim_river_water',
       textureKey: riverFrames[0],
       frameStart: 0,
-      frameEnd: 3,
-      frameRate: 6,
+      frameEnd: frameEnd,
+      frameRate: frameCount >= 8 ? 8 : 6, // Rivers flow faster
       repeat: -1,
     });
   }

@@ -592,9 +592,18 @@ export class TradeSystem {
   // Time of day affects prices
   public applyTimeModifier(isMarketHours: boolean): void {
     const modifier = isMarketHours ? 1.0 : 1.15; // Higher prices outside market hours
-    
+
     for (const state of this.marketState.values()) {
       state.currentPrice = Math.floor(state.currentPrice * modifier);
     }
+  }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.marketState.clear();
+    this.priceHistory.clear();
+    this.npcTraders = [];
   }
 }

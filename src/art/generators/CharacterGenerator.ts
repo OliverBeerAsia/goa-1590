@@ -13,6 +13,7 @@
 
 import {
   ColorRamp,
+  RGBA,
   SKIN_LIGHT,
   SKIN_MEDIUM,
   SKIN_DARK,
@@ -28,6 +29,13 @@ import {
   GOLD,
   SHADOW_COLOR,
   SHADOW_ALPHA,
+  // Extended 5-level ramps and skin tones
+  SKIN_TONES,
+  ExtendedColorRamp,
+  // Color utilities
+  colorToInt,
+  // Pattern generation for fabric textures (Phase 2)
+  generateFabricPattern,
 } from '../palette';
 
 // Character dimensions
@@ -103,10 +111,132 @@ interface BodyPartContext {
   frame: FrameType;
   skin: ColorRamp;
   clothing: ClothingColors;
+  proportions?: BodyProportions;
+  extendedSkin?: ExtendedColorRamp;
 }
 
 /**
- * Get skin color ramp by tone
+ * Body proportions interface for character-type variations
+ */
+export interface BodyProportions {
+  /** Shoulder width multiplier (default 1.0) */
+  shoulderWidth: number;
+  /** Torso height multiplier (default 1.0) */
+  torsoHeight: number;
+  /** Leg length multiplier (default 1.0) */
+  legLength: number;
+  /** Head size multiplier (default 1.0) */
+  headSize: number;
+  /** Arm length multiplier (default 1.0) */
+  armLength: number;
+}
+
+/** Default body proportions */
+const DEFAULT_PROPORTIONS: BodyProportions = {
+  shoulderWidth: 1.0,
+  torsoHeight: 1.0,
+  legLength: 1.0,
+  headSize: 1.0,
+  armLength: 1.0,
+};
+
+/** Character-type specific proportions */
+const CHARACTER_PROPORTIONS: Partial<Record<CharacterType, BodyProportions>> = {
+  [CharacterType.DOCK_PORTER]: {
+    shoulderWidth: 1.2,   // Broader, stronger build
+    torsoHeight: 1.05,
+    legLength: 0.95,
+    headSize: 1.0,
+    armLength: 1.1,
+  },
+  [CharacterType.FRANCISCAN_MONK]: {
+    shoulderWidth: 0.9,   // Narrower, ascetic build
+    torsoHeight: 1.0,
+    legLength: 1.0,
+    headSize: 1.0,
+    armLength: 0.95,
+  },
+  [CharacterType.LOCAL_WOMAN]: {
+    shoulderWidth: 0.85,  // Feminine proportions
+    torsoHeight: 0.9,
+    legLength: 1.0,
+    headSize: 0.95,
+    armLength: 0.9,
+  },
+  [CharacterType.PORTUGUESE_SOLDIER]: {
+    shoulderWidth: 1.15,  // Military build
+    torsoHeight: 1.0,
+    legLength: 1.0,
+    headSize: 1.0,
+    armLength: 1.05,
+  },
+  [CharacterType.CROWN_OFFICIAL]: {
+    shoulderWidth: 1.0,
+    torsoHeight: 1.1,     // Slightly taller torso, more imposing
+    legLength: 1.0,
+    headSize: 1.05,
+    armLength: 1.0,
+  },
+};
+
+/**
+ * Quality configuration for character rendering
+ */
+export interface CharacterQualityConfig {
+  /** Use 5-level skin tone shading */
+  use5LevelShading: boolean;
+  /** Apply fabric texture to clothing */
+  useFabricTexture: boolean;
+  /** Use character-specific body proportions */
+  useBodyProportions: boolean;
+  /** Apply directional lighting */
+  useDirectionalShading: boolean;
+  /** Draw 1-pixel dark outline around character (Phase 2) */
+  useCharacterOutline: boolean;
+  /** Apply rim lighting for dramatic depth (Phase 2) */
+  useRimLighting: boolean;
+  /** Apply ambient occlusion at body joints (Phase 2) */
+  useJointAO: boolean;
+  /** Shadow feathering pixels (0 = none, 2-4 for quality) (Phase 2) */
+  shadowFeatherPixels: number;
+}
+
+/** Quality presets */
+const CHARACTER_QUALITY_PRESETS: Record<'low' | 'medium' | 'high', CharacterQualityConfig> = {
+  low: {
+    use5LevelShading: false,
+    useFabricTexture: false,
+    useBodyProportions: false,
+    useDirectionalShading: false,
+    useCharacterOutline: true, // Outline at all quality levels for readability
+    useRimLighting: false,
+    useJointAO: false,
+    shadowFeatherPixels: 0,
+  },
+  medium: {
+    use5LevelShading: true,
+    useFabricTexture: false,
+    useBodyProportions: true,
+    useDirectionalShading: true,
+    useCharacterOutline: true,
+    useRimLighting: true,
+    useJointAO: false,
+    shadowFeatherPixels: 2,
+  },
+  high: {
+    use5LevelShading: true,
+    useFabricTexture: true,
+    useBodyProportions: true,
+    useDirectionalShading: true,
+    useCharacterOutline: true,
+    useRimLighting: true,
+    useJointAO: true,
+    shadowFeatherPixels: 4,
+  },
+};
+
+/**
+ * Get skin color ramp by tone (legacy 4-level)
  */
 function getSkinRamp(tone: SkinTone): ColorRamp {
   switch (tone) {
@@ -119,6 +249,34 @@ function getSkinRamp(tone: SkinTone): ColorRamp {
     default:
       return SKIN_MEDIUM;
   }
+}
+
+/**
+ * Get extended 5-level skin tone ramp for enhanced shading
+ */
+function getExtendedSkinRamp(tone: SkinTone): ExtendedColorRamp {
+  switch (tone) {
+    case SkinTone.LIGHT:
+      return SKIN_TONES.PORTUGUESE;
+    case SkinTone.MEDIUM:
+      return SKIN_TONES.INDIAN;
+    case SkinTone.DARK:
+      return SKIN_TONES.AFRICAN;
+    default:
+      return SKIN_TONES.INDIAN;
+  }
+}
+
+/**
+ * Convert ExtendedColorRamp to legacy ColorRamp for compatibility
+ */
+function extendedToLegacyRamp(extended: ExtendedColorRamp): ColorRamp {
+  return {
+    highlight: colorToInt(extended.highlight.rgb),
+    base: colorToInt(extended.mid.rgb),
+    shadow: colorToInt(extended.dark.rgb),
+    deep: colorToInt(extended.shadow.rgb),
+  };
 }
 
 /**
@@ -173,9 +331,25 @@ function getArmSwing(frame: FrameType): { leftArm: number; rightArm: number } {
  */
 export class CharacterGenerator {
   private scene: Phaser.Scene;
+  private qualityConfig: CharacterQualityConfig;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, quality: 'low' | 'medium' | 'high' = 'high') {
     this.scene = scene;
+    this.qualityConfig = CHARACTER_QUALITY_PRESETS[quality];
+  }
+
+  /**
+   * Set quality configuration
+   */
+  setQuality(quality: 'low' | 'medium' | 'high'): void {
+    this.qualityConfig = CHARACTER_QUALITY_PRESETS[quality];
+  }
+
+  /**
+   * Set custom quality configuration
+   */
+  setQualityConfig(config: Partial<CharacterQualityConfig>): void {
+    this.qualityConfig = { ...this.qualityConfig, ...config };
   }
 
   /**
@@ -183,8 +357,25 @@ export class CharacterGenerator {
    */
   generateCharacter(config: CharacterConfig): string {
     const graphics = this.scene.make.graphics({ x: 0, y: 0 });
-    const skin = getSkinRamp(config.skinTone || SkinTone.MEDIUM);
+
+    // Get skin tone - use 5-level if enabled
+    const skinTone = config.skinTone || SkinTone.MEDIUM;
+    let skin: ColorRamp;
+    let extendedSkin: ExtendedColorRamp | undefined;
+
+    if (this.qualityConfig.use5LevelShading) {
+      extendedSkin = getExtendedSkinRamp(skinTone);
+      skin = extendedToLegacyRamp(extendedSkin);
+    } else {
+      skin = getSkinRamp(skinTone);
+    }
+
     const clothing = this.getClothingColors(config.type, config.clothingVariant || 0);
+
+    // Get body proportions if enabled
+    const proportions = this.qualityConfig.useBodyProportions
+      ? CHARACTER_PROPORTIONS[config.type] || DEFAULT_PROPORTIONS
+      : DEFAULT_PROPORTIONS;
 
     // Generate all frames for all directions
     for (let dir = 0; dir < 4; dir++) {
@@ -200,9 +391,14 @@ export class CharacterGenerator {
           frame: frame as FrameType,
           skin,
           clothing,
+          proportions,
+          extendedSkin,
         };
 
         this.renderCharacter(ctx, config.type);
+
+        // Phase 2: Apply character outline for readability against any background
+        this.applyCharacterOutline(graphics, x, y, CHAR_WIDTH, CHAR_HEIGHT);
       }
     }
 
@@ -292,8 +488,12 @@ export class CharacterGenerator {
   private renderCharacter(ctx: BodyPartContext, type: CharacterType): void {
     const walkOffset = getWalkOffset(ctx.frame);
 
-    // Draw shadow
-    this.drawShadow(ctx);
+    // Phase 2: Draw enhanced shadow with feathering (or basic shadow)
+    if (this.qualityConfig.shadowFeatherPixels > 0) {
+      this.drawEnhancedShadow(ctx, 12, 'stone');
+    } else {
+      this.drawShadow(ctx);
+    }
 
     // Draw character based on type
     switch (type) {
@@ -328,6 +528,13 @@ export class CharacterGenerator {
         this.drawLocalWomanCharacter(ctx, walkOffset);
         break;
     }
+
+    // Phase 2: Apply joint ambient occlusion after character is drawn
+    this.applyJointAmbientOcclusion(ctx, walkOffset);
+
+    // Phase 2: Apply rim lighting for dramatic depth
+    const lightDir = this.getLightDirection(ctx.direction);
+    this.applyRimLighting(ctx, lightDir, 0.6, 12);
   }
 
   /**
@@ -340,6 +547,7 @@ export class CharacterGenerator {
 
   /**
    * Draw a filled rectangle with shading
+   * Enhanced to support 5-level shading when quality config allows
    */
   private drawShadedRect(
     ctx: BodyPartContext,
@@ -350,33 +558,175 @@ export class CharacterGenerator {
     ramp: ColorRamp,
     direction: Direction
   ): void {
-    // Base fill
-    ctx.graphics.fillStyle(ramp.base, 1);
-    ctx.graphics.fillRect(ctx.x + x, ctx.y + y, w, h);
-
-    // Add directional shading
-    if (direction === Direction.WEST || direction === Direction.NORTH) {
-      ctx.graphics.fillStyle(ramp.shadow, 0.5);
-      ctx.graphics.fillRect(ctx.x + x + w - 2, ctx.y + y, 2, h);
+    if (this.qualityConfig.use5LevelShading && this.qualityConfig.useDirectionalShading) {
+      // Enhanced 5-level shading
+      this.draw5LevelShadedRect(ctx, x, y, w, h, ramp, direction);
     } else {
-      ctx.graphics.fillStyle(ramp.highlight, 0.4);
-      ctx.graphics.fillRect(ctx.x + x, ctx.y + y, 2, h);
+      // Legacy 3-level shading
+      // Base fill
+      ctx.graphics.fillStyle(ramp.base, 1);
+      ctx.graphics.fillRect(ctx.x + x, ctx.y + y, w, h);
+
+      // Add directional shading
+      if (direction === Direction.WEST || direction === Direction.NORTH) {
+        ctx.graphics.fillStyle(ramp.shadow, 0.5);
+        ctx.graphics.fillRect(ctx.x + x + w - 2, ctx.y + y, 2, h);
+      } else {
+        ctx.graphics.fillStyle(ramp.highlight, 0.4);
+        ctx.graphics.fillRect(ctx.x + x, ctx.y + y, 2, h);
+      }
     }
   }
 
   /**
+   * Enhanced 5-level shading for rectangles
+   * Creates gradient-like appearance with highlight -> light -> mid -> dark -> shadow
+   */
+  private draw5LevelShadedRect(
+    ctx: BodyPartContext,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ramp: ColorRamp,
+    direction: Direction
+  ): void {
+    // Calculate shading zones (divide width into 5 zones)
+    const zoneWidth = Math.max(1, Math.floor(w / 5));
+
+    // Determine light direction based on character facing
+    const lightFromLeft = direction === Direction.EAST || direction === Direction.SOUTH;
+
+    // Create color array from light to dark
+    const colors = lightFromLeft
+      ? [ramp.highlight, ramp.highlight, ramp.base, ramp.shadow, ramp.deep]
+      : [ramp.deep, ramp.shadow, ramp.base, ramp.highlight, ramp.highlight];
+
+    // Draw zones
+    for (let i = 0; i < 5; i++) {
+      const zoneX = x + i * zoneWidth;
+      const zoneW = i === 4 ? w - 4 * zoneWidth : zoneWidth;
+
+      ctx.graphics.fillStyle(colors[i], 1);
+      ctx.graphics.fillRect(ctx.x + zoneX, ctx.y + y, zoneW, h);
+    }
+
+    // Add vertical gradient effect (darker at bottom for realism)
+    const gradientH = Math.floor(h / 3);
+    ctx.graphics.fillStyle(ramp.shadow, 0.15);
+    ctx.graphics.fillRect(ctx.x + x, ctx.y + y + h - gradientH, w, gradientH);
+
+    // Top highlight strip
+    ctx.graphics.fillStyle(ramp.highlight, 0.2);
+    ctx.graphics.fillRect(ctx.x + x, ctx.y + y, w, 1);
+  }
+
+  /**
    * Draw head with proper direction
+   * Enhanced with 5-level shading when available
    */
   private drawHead(
     ctx: BodyPartContext,
     yOffset: number,
     walkOffset: { bob: number }
   ): void {
-    const headY = ctx.y + 8 + walkOffset.bob + yOffset;
-    const headX = ctx.x + 11;
-    const headW = 10;
-    const headH = 10;
+    // Apply head size proportion
+    const sizeMultiplier = ctx.proportions?.headSize || 1.0;
+    const baseHeadW = 10;
+    const baseHeadH = 10;
+    const headW = Math.round(baseHeadW * sizeMultiplier);
+    const headH = Math.round(baseHeadH * sizeMultiplier);
+    const headX = ctx.x + 11 + Math.floor((baseHeadW - headW) / 2);
+    const headY = ctx.y + 8 + walkOffset.bob + yOffset - Math.floor((headH - baseHeadH) / 2);
 
+    if (this.qualityConfig.use5LevelShading && ctx.extendedSkin) {
+      // Enhanced 5-level skin shading
+      this.draw5LevelHead(ctx, headX, headY, headW, headH, walkOffset);
+    } else {
+      // Legacy 4-level head rendering
+      this.drawLegacyHead(ctx, headX, headY, headW, headH, walkOffset);
+    }
+  }
+
+  /**
+   * Enhanced 5-level head rendering
+   */
+  private draw5LevelHead(
+    ctx: BodyPartContext,
+    headX: number,
+    headY: number,
+    headW: number,
+    headH: number,
+    _walkOffset: { bob: number }
+  ): void {
+    const skin = ctx.extendedSkin!;
+
+    // Draw head with horizontal gradient based on direction
+    const lightFromLeft = ctx.direction === Direction.EAST || ctx.direction === Direction.SOUTH;
+
+    // Main head shape with gradient
+    for (let px = 0; px < headW; px++) {
+      let color: RGBA;
+      const ratio = px / headW;
+      const effectiveRatio = lightFromLeft ? ratio : 1 - ratio;
+
+      if (effectiveRatio < 0.2) {
+        color = skin.highlight.rgb;
+      } else if (effectiveRatio < 0.4) {
+        color = skin.light.rgb;
+      } else if (effectiveRatio < 0.6) {
+        color = skin.mid.rgb;
+      } else if (effectiveRatio < 0.8) {
+        color = skin.dark.rgb;
+      } else {
+        color = skin.shadow.rgb;
+      }
+
+      ctx.graphics.fillStyle(colorToInt(color), 1);
+      ctx.graphics.fillRect(headX + px, headY, 1, headH);
+    }
+
+    // Add vertical shading (darker at chin)
+    ctx.graphics.fillStyle(colorToInt(skin.dark.rgb), 0.2);
+    ctx.graphics.fillRect(headX, headY + headH - 2, headW, 2);
+
+    // Top highlight
+    ctx.graphics.fillStyle(colorToInt(skin.highlight.rgb), 0.3);
+    ctx.graphics.fillRect(headX + 2, headY, headW - 4, 1);
+
+    // Facial features for south-facing
+    if (ctx.direction === Direction.SOUTH) {
+      // Eyes (using shadow color for depth)
+      ctx.graphics.fillStyle(colorToInt(skin.shadow.rgb), 1);
+      ctx.graphics.fillRect(headX + 2, headY + 3, 2, 2);
+      ctx.graphics.fillRect(headX + 6, headY + 3, 2, 2);
+
+      // Eye highlights
+      ctx.graphics.fillStyle(0xffffff, 0.5);
+      ctx.graphics.fillRect(headX + 2, headY + 3, 1, 1);
+      ctx.graphics.fillRect(headX + 6, headY + 3, 1, 1);
+
+      // Nose shadow (subtle)
+      ctx.graphics.fillStyle(colorToInt(skin.dark.rgb), 0.4);
+      ctx.graphics.fillRect(headX + 4, headY + 5, 2, 2);
+    } else if (ctx.direction === Direction.NORTH) {
+      // Hair/back of head
+      ctx.graphics.fillStyle(colorToInt(skin.shadow.rgb), 0.4);
+      ctx.graphics.fillRect(headX + 2, headY + 2, headW - 4, headH - 4);
+    }
+  }
+
+  /**
+   * Legacy head rendering (4-level)
+   */
+  private drawLegacyHead(
+    ctx: BodyPartContext,
+    headX: number,
+    headY: number,
+    headW: number,
+    headH: number,
+    _walkOffset: { bob: number }
+  ): void {
     // Head shape
     ctx.graphics.fillStyle(ctx.skin.base, 1);
     ctx.graphics.fillRect(headX, headY, headW, headH);
@@ -425,6 +775,9 @@ export class CharacterGenerator {
     // Doublet (torso)
     this.drawShadedRect(ctx, 10, 18 + walkOffset.bob, 12, 14, ctx.clothing.primary, ctx.direction);
 
+    // Phase 2: Apply silk brocade fabric texture for merchant class
+    this.applyFabricTexture(ctx, 10, 18 + walkOffset.bob, 12, 14, ctx.clothing.primary, 'silk');
+
     // Gold trim for player
     if (isPlayer) {
       ctx.graphics.fillStyle(ctx.clothing.accent.base, 1);
@@ -463,6 +816,8 @@ export class CharacterGenerator {
       ctx.graphics.fillRect(ctx.x + 8, ctx.y + 18 + walkOffset.bob, 16, 16);
       ctx.graphics.fillStyle(WOOD_LIGHT.shadow, 0.4);
       ctx.graphics.fillRect(ctx.x + 14, ctx.y + 18 + walkOffset.bob, 10, 16);
+      // Phase 2: Wool cape texture
+      this.applyFabricTexture(ctx, 8, 18 + walkOffset.bob, 16, 16, WOOD_LIGHT, 'wool');
     }
 
     // Outline
@@ -483,6 +838,9 @@ export class CharacterGenerator {
     ctx.graphics.fillRect(ctx.x + 8, ctx.y + 24 + walkOffset.bob, 16, 18);
     ctx.graphics.fillStyle(ctx.clothing.primary.shadow, 0.4);
     ctx.graphics.fillRect(ctx.x + 20, ctx.y + 24 + walkOffset.bob, 4, 18);
+
+    // Phase 2: Apply cotton weave texture for dhoti
+    this.applyFabricTexture(ctx, 8, 24 + walkOffset.bob, 16, 18, ctx.clothing.primary, 'cotton');
 
     // Dhoti drape detail
     ctx.graphics.fillStyle(ctx.clothing.secondary.base, 0.6);
@@ -548,6 +906,9 @@ export class CharacterGenerator {
     ctx.graphics.fillRect(ctx.x + 8, ctx.y + 18 + walkOffset.bob, 5, 26);
     ctx.graphics.fillStyle(ctx.clothing.primary.shadow, 0.4);
     ctx.graphics.fillRect(ctx.x + 20, ctx.y + 18 + walkOffset.bob, 4, 26);
+
+    // Phase 2: Apply linen fabric texture for flowing robes
+    this.applyFabricTexture(ctx, 8, 18 + walkOffset.bob, 16, 26, ctx.clothing.primary, 'linen');
 
     // Robe seam detail
     ctx.graphics.lineStyle(1, ctx.clothing.primary.deep, 0.4);
@@ -626,6 +987,9 @@ export class CharacterGenerator {
     // Long formal coat
     this.drawShadedRect(ctx, 8, 16 + walkOffset.bob, 16, 20, ctx.clothing.primary, ctx.direction);
 
+    // Phase 2: Apply wool fabric texture for formal coat
+    this.applyFabricTexture(ctx, 8, 16 + walkOffset.bob, 16, 20, ctx.clothing.primary, 'wool');
+
     // Large ornate ruff
     ctx.graphics.fillStyle(WHITEWASH.base, 1);
     ctx.graphics.fillRect(ctx.x + 6, ctx.y + 14 + walkOffset.bob, 20, 4);
@@ -680,6 +1044,9 @@ export class CharacterGenerator {
     // Simple shirt
     this.drawShadedRect(ctx, 10, 18 + walkOffset.bob, 12, 14, ctx.clothing.secondary, ctx.direction);
 
+    // Phase 2: Apply rough linen fabric texture for sailor shirt
+    this.applyFabricTexture(ctx, 10, 18 + walkOffset.bob, 12, 14, ctx.clothing.secondary, 'linen');
+
     // Vest or open shirt front
     ctx.graphics.fillStyle(ctx.clothing.primary.base, 0.8);
     ctx.graphics.fillRect(ctx.x + 10, ctx.y + 18 + walkOffset.bob, 4, 14);
@@ -722,6 +1089,9 @@ export class CharacterGenerator {
     ctx.graphics.fillRect(ctx.x + 8, ctx.y + 16 + walkOffset.bob, 5, 28);
     ctx.graphics.fillStyle(ctx.clothing.primary.shadow, 0.4);
     ctx.graphics.fillRect(ctx.x + 20, ctx.y + 16 + walkOffset.bob, 4, 28);
+
+    // Phase 2: Apply rough wool fabric texture for Franciscan habit
+    this.applyFabricTexture(ctx, 8, 16 + walkOffset.bob, 16, 28, ctx.clothing.primary, 'wool');
 
     // Rope belt
     ctx.graphics.fillStyle(FABRIC_CREAM.shadow, 1);
@@ -809,6 +1179,9 @@ export class CharacterGenerator {
     ctx.graphics.fillStyle(ctx.clothing.secondary.highlight, 0.3);
     ctx.graphics.fillRect(ctx.x + 8, ctx.y + 26 + walkOffset.bob, 5, 3);
 
+    // Phase 2: Apply silk fabric texture for soldier's sash
+    this.applyFabricTexture(ctx, 8, 26 + walkOffset.bob, 16, 3, ctx.clothing.secondary, 'silk');
+
     // Arms (armored)
     ctx.graphics.fillStyle(IRON.base, 1);
     ctx.graphics.fillRect(ctx.x + 6, ctx.y + 18 + walkOffset.bob + armSwing.leftArm, 4, 10);
@@ -854,6 +1227,9 @@ export class CharacterGenerator {
     ctx.graphics.fillRect(ctx.x + 10, ctx.y + 24 + walkOffset.bob, 12, 16);
     ctx.graphics.fillStyle(ctx.clothing.primary.shadow, 0.3);
     ctx.graphics.fillRect(ctx.x + 18, ctx.y + 24 + walkOffset.bob, 4, 16);
+
+    // Phase 2: Apply rough linen fabric texture for dock porter loincloth
+    this.applyFabricTexture(ctx, 10, 24 + walkOffset.bob, 12, 16, ctx.clothing.primary, 'linen');
 
     // Legs (visible below loincloth)
     ctx.graphics.fillStyle(ctx.skin.base, 1);
@@ -918,6 +1294,9 @@ export class CharacterGenerator {
     ctx.graphics.fillStyle(ctx.clothing.primary.shadow, 0.4);
     ctx.graphics.fillRect(ctx.x + 20, ctx.y + 22 + walkOffset.bob, 4, 22);
 
+    // Phase 2: Apply silk fabric texture for sari
+    this.applyFabricTexture(ctx, 8, 22 + walkOffset.bob, 16, 22, ctx.clothing.primary, 'silk');
+
     // Sari pleats
     ctx.graphics.lineStyle(1, ctx.clothing.primary.deep, 0.3);
     for (let i = 0; i < 4; i++) {
@@ -943,6 +1322,9 @@ export class CharacterGenerator {
     ctx.graphics.fillRect(ctx.x + 10, ctx.y + 14 + walkOffset.bob, 12, 10);
     ctx.graphics.fillStyle(ctx.clothing.secondary.shadow, 0.3);
     ctx.graphics.fillRect(ctx.x + 18, ctx.y + 14 + walkOffset.bob, 4, 10);
+
+    // Phase 2: Apply cotton fabric texture for choli blouse
+    this.applyFabricTexture(ctx, 10, 14 + walkOffset.bob, 12, 10, ctx.clothing.secondary, 'cotton');
 
     // Sari pallu (draped over shoulder)
     ctx.graphics.fillStyle(ctx.clothing.primary.base, 0.9);
@@ -1072,11 +1454,338 @@ export class CharacterGenerator {
   }
 
   /**
-   * Draw character outline
+   * Draw character outline (legacy method - simple rectangle)
    */
   private drawOutline(ctx: BodyPartContext, x: number, y: number, w: number, h: number): void {
     ctx.graphics.lineStyle(1, 0x000000, 0.6);
     ctx.graphics.strokeRect(ctx.x + x, ctx.y + y, w, h);
+  }
+
+  // ============================================
+  // PHASE 2: VISUAL EXCELLENCE ENHANCEMENTS
+  // ============================================
+
+  /**
+   * Outline color for character sprites (dark brown-black for classic RPG look)
+   */
+  private static readonly OUTLINE_COLOR: RGBA = { r: 20, g: 15, b: 10, a: 255 };
+
+  /**
+   * Draw a proper 1-pixel outline around the character sprite
+   * This scans for edge pixels and draws outline in transparent neighbors
+   * Applied after all character rendering for clean silhouette
+   */
+  private applyCharacterOutline(
+    graphics: Phaser.GameObjects.Graphics,
+    frameX: number,
+    frameY: number,
+    _width: number,
+    _height: number
+  ): void {
+    if (!this.qualityConfig.useCharacterOutline) return;
+
+    const outlineColor = colorToInt(CharacterGenerator.OUTLINE_COLOR);
+
+    // We need to work with the rendered content, but since Phaser Graphics
+    // doesn't give us pixel-level access easily, we'll draw a simplified
+    // outline around the character bounds with alpha detection simulation
+
+    // For a more accurate outline, we draw a slightly expanded dark shape
+    // behind visible areas. This creates the classic pixel art outline effect.
+
+    graphics.lineStyle(1, outlineColor, 0.85);
+
+    // Draw outline around character body area (approximate based on typical proportions)
+    const bodyLeft = frameX + 6;
+    const bodyRight = frameX + 26;
+    const bodyTop = frameY + 2;
+    const bodyBottom = frameY + 45;
+
+    // Left edge
+    graphics.beginPath();
+    graphics.moveTo(bodyLeft - 1, bodyTop + 8);
+    graphics.lineTo(bodyLeft - 1, bodyBottom);
+    graphics.strokePath();
+
+    // Right edge
+    graphics.beginPath();
+    graphics.moveTo(bodyRight + 1, bodyTop + 8);
+    graphics.lineTo(bodyRight + 1, bodyBottom);
+    graphics.strokePath();
+
+    // Top edge (head area, slightly curved)
+    graphics.beginPath();
+    graphics.moveTo(bodyLeft + 4, bodyTop);
+    graphics.lineTo(bodyRight - 4, bodyTop);
+    graphics.strokePath();
+
+    // Connect head to body
+    graphics.beginPath();
+    graphics.moveTo(bodyLeft - 1, bodyTop + 8);
+    graphics.lineTo(bodyLeft + 4, bodyTop);
+    graphics.strokePath();
+
+    graphics.beginPath();
+    graphics.moveTo(bodyRight + 1, bodyTop + 8);
+    graphics.lineTo(bodyRight - 4, bodyTop);
+    graphics.strokePath();
+  }
+
+  /**
+   * Apply rim lighting to character edges for dramatic depth
+   * Creates a highlight on edges opposite to the light source
+   * @param ctx Body part context
+   * @param lightDirection Direction light is coming from
+   * @param intensity Light intensity (0-1)
+   * @param timeOfDay Hour (0-24) for color temperature
+   */
+  private applyRimLighting(
+    ctx: BodyPartContext,
+    lightDirection: 'left' | 'right' | 'top',
+    intensity: number,
+    timeOfDay: number = 12
+  ): void {
+    if (!this.qualityConfig.useRimLighting) return;
+
+    // Determine rim light color based on time of day
+    let rimColor: RGBA;
+    if (timeOfDay >= 6 && timeOfDay <= 8) {
+      // Golden hour morning - warm orange
+      rimColor = { r: 255, g: 200, b: 120, a: 255 };
+    } else if (timeOfDay >= 17 && timeOfDay <= 19) {
+      // Golden hour evening - warm orange-red
+      rimColor = { r: 255, g: 180, b: 100, a: 255 };
+    } else if (timeOfDay >= 20 || timeOfDay <= 5) {
+      // Night - cool blue
+      rimColor = { r: 100, g: 150, b: 220, a: 255 };
+    } else {
+      // Day - neutral white-yellow
+      rimColor = { r: 255, g: 250, b: 230, a: 255 };
+    }
+
+    const rimColorInt = colorToInt(rimColor);
+    const alpha = intensity * 0.4;
+
+    // Apply rim light on the edge opposite to light direction
+    // This creates the "backlit" effect common in classic RPGs
+
+    const bodyX = ctx.x + 10;
+    const bodyY = ctx.y + 16;
+    const bodyW = 12;
+    const bodyH = 28;
+
+    ctx.graphics.lineStyle(1, rimColorInt, alpha);
+
+    switch (lightDirection) {
+      case 'left':
+        // Light from left, rim on right edge
+        ctx.graphics.beginPath();
+        ctx.graphics.moveTo(bodyX + bodyW + 1, bodyY);
+        ctx.graphics.lineTo(bodyX + bodyW + 1, bodyY + bodyH);
+        ctx.graphics.strokePath();
+        break;
+      case 'right':
+        // Light from right, rim on left edge
+        ctx.graphics.beginPath();
+        ctx.graphics.moveTo(bodyX - 1, bodyY);
+        ctx.graphics.lineTo(bodyX - 1, bodyY + bodyH);
+        ctx.graphics.strokePath();
+        break;
+      case 'top':
+        // Light from top, rim on bottom
+        ctx.graphics.beginPath();
+        ctx.graphics.moveTo(bodyX, bodyY + bodyH + 1);
+        ctx.graphics.lineTo(bodyX + bodyW, bodyY + bodyH + 1);
+        ctx.graphics.strokePath();
+        break;
+    }
+
+    // Also add subtle rim on head for more dimension
+    const headX = ctx.x + 11;
+    const headY = ctx.y + 8;
+    const headW = 10;
+    const headH = 10;
+
+    ctx.graphics.lineStyle(1, rimColorInt, alpha * 0.7);
+
+    if (lightDirection === 'left') {
+      ctx.graphics.beginPath();
+      ctx.graphics.moveTo(headX + headW, headY + 2);
+      ctx.graphics.lineTo(headX + headW, headY + headH - 2);
+      ctx.graphics.strokePath();
+    } else if (lightDirection === 'right') {
+      ctx.graphics.beginPath();
+      ctx.graphics.moveTo(headX, headY + 2);
+      ctx.graphics.lineTo(headX, headY + headH - 2);
+      ctx.graphics.strokePath();
+    }
+  }
+
+  /**
+   * Apply ambient occlusion darkening at body joints
+   * Creates subtle shadows where body parts connect for depth
+   */
+  private applyJointAmbientOcclusion(ctx: BodyPartContext, walkOffset: { bob: number }): void {
+    if (!this.qualityConfig.useJointAO) return;
+
+    const aoColor = 0x000000;
+    const aoAlpha = 0.15;
+
+    ctx.graphics.fillStyle(aoColor, aoAlpha);
+
+    // Neck/head junction (where head meets torso)
+    const neckX = ctx.x + 13;
+    const neckY = ctx.y + 16 + walkOffset.bob;
+    ctx.graphics.fillEllipse(neckX + 3, neckY, 6, 2);
+
+    // Arm/torso connections (shoulder joints)
+    const shoulderY = ctx.y + 20 + walkOffset.bob;
+    // Left shoulder
+    ctx.graphics.fillEllipse(ctx.x + 9, shoulderY, 3, 2);
+    // Right shoulder
+    ctx.graphics.fillEllipse(ctx.x + 23, shoulderY, 3, 2);
+
+    // Leg/body junctions (hip joints)
+    const hipY = ctx.y + 32 + walkOffset.bob;
+    ctx.graphics.fillEllipse(ctx.x + 13, hipY, 4, 2);
+    ctx.graphics.fillEllipse(ctx.x + 19, hipY, 4, 2);
+
+    // Belt/waist area darkening (clothing overlap)
+    const waistY = ctx.y + 30 + walkOffset.bob;
+    ctx.graphics.fillStyle(aoColor, aoAlpha * 0.7);
+    ctx.graphics.fillRect(ctx.x + 10, waistY, 12, 1);
+  }
+
+  /**
+   * Draw enhanced shadow with feathering and time-based effects
+   * @param ctx Body part context
+   * @param timeOfDay Hour (0-24) affecting shadow length/direction
+   * @param surfaceType Type of surface affecting shadow darkness
+   */
+  private drawEnhancedShadow(
+    ctx: BodyPartContext,
+    timeOfDay: number = 12,
+    surfaceType: 'stone' | 'dirt' | 'sand' | 'water' = 'stone'
+  ): void {
+    const featherPixels = this.qualityConfig.shadowFeatherPixels;
+
+    // Calculate shadow stretch based on time of day
+    // Longer shadows at dawn/dusk, shorter at noon
+    let shadowStretch = 1.0;
+    let shadowOffsetX = 0;
+
+    if (timeOfDay <= 6 || timeOfDay >= 18) {
+      // Early morning or evening - very long shadows
+      shadowStretch = 2.0;
+      shadowOffsetX = timeOfDay <= 12 ? -4 : 4;
+    } else if (timeOfDay <= 9 || timeOfDay >= 15) {
+      // Mid-morning or afternoon - medium shadows
+      shadowStretch = 1.5;
+      shadowOffsetX = timeOfDay <= 12 ? -2 : 2;
+    }
+
+    // Surface-based shadow darkness
+    let baseShadowAlpha = SHADOW_ALPHA;
+    switch (surfaceType) {
+      case 'sand':
+        baseShadowAlpha *= 0.7; // Lighter on sand
+        break;
+      case 'water':
+        baseShadowAlpha *= 0.4; // Very light on water (reflection)
+        break;
+      case 'dirt':
+        baseShadowAlpha *= 0.9;
+        break;
+      // stone is default
+    }
+
+    const shadowX = ctx.x + 16 + shadowOffsetX;
+    const shadowY = ctx.y + 46;
+    const baseWidth = 12 * shadowStretch;
+    const baseHeight = 4;
+
+    if (featherPixels > 0) {
+      // Draw feathered shadow with gradient alpha falloff
+      for (let i = featherPixels; i >= 0; i--) {
+        const layerAlpha = baseShadowAlpha * ((featherPixels - i + 1) / (featherPixels + 1));
+        const layerExpand = i * 0.5;
+
+        ctx.graphics.fillStyle(SHADOW_COLOR, layerAlpha);
+        ctx.graphics.fillEllipse(
+          shadowX,
+          shadowY,
+          baseWidth + layerExpand,
+          baseHeight + layerExpand * 0.5
+        );
+      }
+    } else {
+      // Basic shadow (no feathering)
+      ctx.graphics.fillStyle(SHADOW_COLOR, baseShadowAlpha);
+      ctx.graphics.fillEllipse(shadowX, shadowY, baseWidth, baseHeight);
+    }
+  }
+
+  /**
+   * Apply fabric texture to a clothing area
+   * Uses generateFabricPattern from palette.ts for authentic textile look
+   */
+  private applyFabricTexture(
+    ctx: BodyPartContext,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    primaryColor: ColorRamp,
+    fabricType: 'silk' | 'cotton' | 'linen' | 'wool' = 'cotton'
+  ): void {
+    if (!this.qualityConfig.useFabricTexture) return;
+
+    // Generate fabric pattern with appropriate scale and colors
+    const scale = fabricType === 'silk' ? 1 : fabricType === 'wool' ? 3 : 2;
+
+    // Convert ColorRamp to hex for pattern generation
+    const primaryHex = '#' + primaryColor.base.toString(16).padStart(6, '0');
+    const secondaryHex = '#' + primaryColor.shadow.toString(16).padStart(6, '0');
+
+    const pattern = generateFabricPattern(
+      { width, height, scale, seed: ctx.x * 1000 + ctx.y },
+      primaryHex,
+      secondaryHex
+    );
+
+    // Apply pattern with low opacity to blend with base color
+    const opacity = fabricType === 'silk' ? 0.2 : 0.25;
+
+    for (let py = 0; py < height; py++) {
+      for (let px = 0; px < width; px++) {
+        const pixel = pattern[py]?.[px];
+        if (pixel) {
+          const color = colorToInt(pixel);
+          ctx.graphics.fillStyle(color, opacity);
+          ctx.graphics.fillRect(ctx.x + x + px, ctx.y + y + py, 1, 1);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get light direction based on character facing and time of day
+   */
+  private getLightDirection(direction: Direction, _timeOfDay: number = 12): 'left' | 'right' | 'top' {
+    // Sun typically from the right in isometric games (southeast)
+    // Adjust based on character facing
+    switch (direction) {
+      case Direction.SOUTH:
+        return 'right';
+      case Direction.NORTH:
+        return 'left';
+      case Direction.EAST:
+        return 'top';
+      case Direction.WEST:
+        return 'right';
+      default:
+        return 'right';
+    }
   }
 
   /**

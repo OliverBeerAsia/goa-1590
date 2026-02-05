@@ -14,6 +14,8 @@ export class UIScene extends Phaser.Scene {
   private questOfferPanel!: Phaser.GameObjects.Container;
   private questLogPanel!: Phaser.GameObjects.Container;
   private contractPanel!: Phaser.GameObjects.Container;
+  private bottomBar!: Phaser.GameObjects.Container;
+  private actionButtons: Map<string, Phaser.GameObjects.Container> = new Map();
   private isInventoryOpen = false;
   private isTradeOpen = false;
   private isQuestOfferOpen = false;
@@ -27,6 +29,7 @@ export class UIScene extends Phaser.Scene {
 
   create(): void {
     this.createStatusBar();
+    this.createBottomActionBar();
     this.createInventoryPanel();
     this.createTradePanel();
     this.createTransitionPrompt();
@@ -84,7 +87,7 @@ export class UIScene extends Phaser.Scene {
   private syncFromPlayer(): void {
     try {
       const gold = this.getGold();
-      this.goldText?.setText(`Gold: ${gold}`);
+      this.goldText?.setText(`${gold}`);
       this.updateInventoryDisplay();
     } catch (e) {
       console.warn('Could not sync from player:', e);
@@ -328,8 +331,17 @@ export class UIScene extends Phaser.Scene {
   private toggleQuestLog(): void {
     this.isQuestLogOpen = !this.isQuestLogOpen;
     this.questLogPanel.setVisible(this.isQuestLogOpen);
-    
+
     if (this.isQuestLogOpen) {
+      // Close other panels when opening quest log
+      if (this.isInventoryOpen) {
+        this.isInventoryOpen = false;
+        this.inventoryPanel.setVisible(false);
+      }
+      if (this.isContractPanelOpen) {
+        this.isContractPanelOpen = false;
+        this.contractPanel.setVisible(false);
+      }
       this.updateQuestLog();
     }
   }
@@ -417,14 +429,14 @@ export class UIScene extends Phaser.Scene {
 
   private createStatusBar(): void {
     const width = this.cameras.main.width;
-    
+
     // Larger parchment-style status bar for Ultima 8 style
     const statusBar = this.add.graphics();
-    
+
     // Base parchment color - taller for portrait
     statusBar.fillStyle(0xf4e4bc, 0.95);
     statusBar.fillRect(0, 0, width, 56);
-    
+
     // Aged paper texture effect (subtle noise)
     statusBar.fillStyle(0xe8d4a8, 0.3);
     for (let i = 0; i < width; i += 8) {
@@ -432,41 +444,61 @@ export class UIScene extends Phaser.Scene {
         statusBar.fillRect(i, Math.random() * 50, 4, 2);
       }
     }
-    
+
     // Dark wood frame top and bottom
     statusBar.fillStyle(0x3d2314, 1);
     statusBar.fillRect(0, 0, width, 4);
     statusBar.fillRect(0, 52, width, 4);
-    
+
     // Gold leaf accent line
     statusBar.fillStyle(0xc9a227, 0.8);
     statusBar.fillRect(0, 4, width, 2);
     statusBar.fillRect(0, 50, width, 2);
-    
-    // Portrait placeholder (left side)
+
+    // Portrait frame with metal studs (enhanced 90s RPG style)
     const portraitBg = this.add.graphics();
-    portraitBg.fillStyle(0x3d2314, 1);
-    portraitBg.fillRect(8, 8, 40, 40);
-    portraitBg.fillStyle(0xd4a574, 1); // Skin tone placeholder
+    // Outer metal frame
+    portraitBg.fillStyle(0x4a4a4a, 1);
+    portraitBg.fillRect(6, 6, 44, 44);
+    // Inner bevel (light top-left, dark bottom-right)
+    portraitBg.fillStyle(0x6a6a6a, 1);
+    portraitBg.fillRect(6, 6, 44, 2);
+    portraitBg.fillRect(6, 6, 2, 44);
+    portraitBg.fillStyle(0x2a2a2a, 1);
+    portraitBg.fillRect(6, 48, 44, 2);
+    portraitBg.fillRect(48, 6, 2, 44);
+    // Portrait background
+    portraitBg.fillStyle(0x1a1a2e, 1);
     portraitBg.fillRect(10, 10, 36, 36);
-    portraitBg.fillStyle(0x2c1810, 0.3);
-    portraitBg.fillCircle(28, 24, 12); // Face silhouette
-    portraitBg.lineStyle(2, 0xc9a227, 0.8);
-    portraitBg.strokeRect(8, 8, 40, 40);
-    
+    // Character silhouette
+    portraitBg.fillStyle(0xd4a574, 1);
+    portraitBg.fillCircle(28, 22, 8); // Head
+    portraitBg.fillRect(20, 30, 16, 14); // Body
+    // Metal corner studs
+    portraitBg.fillStyle(0x8b8b8b, 1);
+    portraitBg.fillCircle(10, 10, 3);
+    portraitBg.fillCircle(46, 10, 3);
+    portraitBg.fillCircle(10, 46, 3);
+    portraitBg.fillCircle(46, 46, 3);
+    // Stud highlights
+    portraitBg.fillStyle(0xb0b0b0, 1);
+    portraitBg.fillCircle(9, 9, 1);
+    portraitBg.fillCircle(45, 9, 1);
+    portraitBg.fillCircle(9, 45, 1);
+    portraitBg.fillCircle(45, 45, 1);
+
     // Corner ornaments (simple flourishes)
-    this.drawCornerOrnament(statusBar, 55, 8);
-    this.drawCornerOrnament(statusBar, width - 25, 8);
+    this.drawCornerOrnament(statusBar, 58, 8);
 
     // Time display with larger quill-written style
-    this.timeText = this.add.text(60, 12, 'Market Hours - 7:00 AM (Day 1)', {
+    this.timeText = this.add.text(64, 12, 'Market Hours - 7:00 AM (Day 1)', {
       fontFamily: 'Georgia, serif',
       fontSize: '16px',
       color: '#2c1810',
     });
-    
+
     // Location hint below time
-    const locationText = this.add.text(60, 32, 'Ribeira Grande - The Great Waterfront', {
+    const locationText = this.add.text(64, 32, 'Ribeira Grande - The Great Waterfront', {
       fontFamily: 'Georgia, serif',
       fontSize: '12px',
       color: '#5a4030',
@@ -474,44 +506,64 @@ export class UIScene extends Phaser.Scene {
     });
     locationText.setName('locationText');
 
-    // Rank display
-    this.rankText = this.add.text(60, 32, 'Peddler', {
+    // Rank display (positioned after location)
+    this.rankText = this.add.text(340, 32, 'Peddler', {
       fontFamily: 'Georgia, serif',
       fontSize: '11px',
       color: '#5a4030',
       fontStyle: 'italic',
     });
 
-    // Gold display styled as ledger entry - larger
-    // Initial value, will be synced from Player after scene is fully created
-    this.goldText = this.add.text(width - 130, 12, `Gold: 100`, {
+    // Gold display with coin icon
+    this.createGoldDisplay(width - 140, 18);
+  }
+
+  /**
+   * Create gold coin icon and text display
+   */
+  private createGoldDisplay(x: number, y: number): void {
+    const coinContainer = this.add.container(x, y);
+
+    // Draw gold coin icon (16x16)
+    const coin = this.add.graphics();
+
+    // Coin base (gold)
+    coin.fillStyle(0xffd700, 1);
+    coin.fillCircle(0, 0, 10);
+
+    // Coin edge shadow (darker gold)
+    coin.fillStyle(0xb8860b, 1);
+    coin.fillCircle(1, 1, 10);
+
+    // Coin face (bright gold)
+    coin.fillStyle(0xffd700, 1);
+    coin.fillCircle(0, 0, 9);
+
+    // Highlight (top-left shine)
+    coin.fillStyle(0xffec8b, 1);
+    coin.fillCircle(-3, -3, 4);
+
+    // Inner detail (cross or pattern)
+    coin.fillStyle(0xb8860b, 0.6);
+    coin.fillRect(-1, -6, 2, 12);
+    coin.fillRect(-6, -1, 12, 2);
+
+    // Center dot
+    coin.fillStyle(0xffd700, 1);
+    coin.fillCircle(0, 0, 2);
+
+    coinContainer.add(coin);
+
+    // Gold text next to coin
+    this.goldText = this.add.text(16, -10, '100', {
       fontFamily: 'Georgia, serif',
-      fontSize: '18px',
+      fontSize: '20px',
       color: '#8b6914',
       fontStyle: 'bold',
+      stroke: '#3d2314',
+      strokeThickness: 1,
     });
-
-    // Inventory button styled as ledger tab - larger
-    const invButton = this.add.text(width - 240, 12, '[I]nventory', {
-      fontFamily: 'Georgia, serif',
-      fontSize: '14px',
-      color: '#5a4020',
-    });
-    invButton.setInteractive({ useHandCursor: true });
-    invButton.on('pointerover', () => invButton.setColor('#8b6914'));
-    invButton.on('pointerout', () => invButton.setColor('#5a4020'));
-    invButton.on('pointerdown', () => this.toggleInventory());
-
-    // Contracts button
-    const contractBtn = this.add.text(width - 240, 32, '[C]ontracts', {
-      fontFamily: 'Georgia, serif',
-      fontSize: '14px',
-      color: '#5a4020',
-    });
-    contractBtn.setInteractive({ useHandCursor: true });
-    contractBtn.on('pointerover', () => contractBtn.setColor('#8b6914'));
-    contractBtn.on('pointerout', () => contractBtn.setColor('#5a4020'));
-    contractBtn.on('pointerdown', () => this.toggleContractPanel());
+    coinContainer.add(this.goldText);
   }
 
   private drawCornerOrnament(graphics: Phaser.GameObjects.Graphics, x: number, y: number): void {
@@ -520,6 +572,359 @@ export class UIScene extends Phaser.Scene {
     graphics.fillRect(x, y, 2, 15);
     graphics.fillRect(x + 3, y + 3, 8, 1);
     graphics.fillRect(x + 3, y + 3, 1, 8);
+  }
+
+  /**
+   * Create bottom action bar with icon buttons (90s RPG style)
+   */
+  private createBottomActionBar(): void {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+    const barHeight = 52;
+    const barY = height - barHeight;
+
+    this.bottomBar = this.add.container(0, barY);
+    this.bottomBar.setDepth(100);
+
+    // Main bar background (dark wood with metal trim)
+    const barBg = this.add.graphics();
+
+    // Wood base
+    barBg.fillStyle(0x2c1810, 0.95);
+    barBg.fillRect(0, 0, width, barHeight);
+
+    // Wood grain texture
+    barBg.fillStyle(0x3d2314, 0.4);
+    for (let i = 0; i < width; i += 20) {
+      barBg.fillRect(i, 0, 2, barHeight);
+    }
+
+    // Metal frame top edge
+    barBg.fillStyle(0x4a4a4a, 1);
+    barBg.fillRect(0, 0, width, 4);
+    // Bevel highlight
+    barBg.fillStyle(0x6a6a6a, 1);
+    barBg.fillRect(0, 0, width, 2);
+    // Bevel shadow
+    barBg.fillStyle(0x2a2a2a, 1);
+    barBg.fillRect(0, 3, width, 1);
+
+    // Gold inlay line
+    barBg.fillStyle(0xc9a227, 0.6);
+    barBg.fillRect(0, 5, width, 1);
+
+    // Metal frame bottom
+    barBg.fillStyle(0x4a4a4a, 1);
+    barBg.fillRect(0, barHeight - 3, width, 3);
+
+    this.bottomBar.add(barBg);
+
+    // Create action buttons
+    const buttons = [
+      { id: 'inventory', icon: 'bag', label: 'Inventory', hotkey: 'I', action: () => this.toggleInventory() },
+      { id: 'quests', icon: 'scroll', label: 'Quests', hotkey: 'J', action: () => this.toggleQuestLog() },
+      { id: 'contracts', icon: 'contract', label: 'Contracts', hotkey: 'C', action: () => this.toggleContractPanel() },
+      { id: 'map', icon: 'map', label: 'Map', hotkey: 'M', action: () => this.showMapPlaceholder() },
+      { id: 'skills', icon: 'star', label: 'Skills', hotkey: 'K', action: () => this.showSkillsPlaceholder() },
+    ];
+
+    const buttonSize = 40;
+    const buttonSpacing = 8;
+    const totalWidth = buttons.length * buttonSize + (buttons.length - 1) * buttonSpacing;
+    const startX = (width - totalWidth) / 2;
+
+    buttons.forEach((btnConfig, index) => {
+      const btnX = startX + index * (buttonSize + buttonSpacing);
+      const btnY = 6;
+      const btn = this.createActionButton(btnX, btnY, buttonSize, btnConfig);
+      this.bottomBar.add(btn);
+      this.actionButtons.set(btnConfig.id, btn);
+    });
+
+    // Decorative corner pieces
+    this.drawBarCorner(barBg, 0, 0, false);
+    this.drawBarCorner(barBg, width - 20, 0, true);
+  }
+
+  /**
+   * Create a single action button with icon
+   */
+  private createActionButton(
+    x: number,
+    y: number,
+    size: number,
+    config: { id: string; icon: string; label: string; hotkey: string; action: () => void }
+  ): Phaser.GameObjects.Container {
+    const btn = this.add.container(x, y);
+
+    // Button background (beveled metal)
+    const bg = this.add.graphics();
+
+    // Outer shadow
+    bg.fillStyle(0x1a1a1a, 1);
+    bg.fillRect(2, 2, size, size);
+
+    // Button base
+    bg.fillStyle(0x4a4a4a, 1);
+    bg.fillRect(0, 0, size, size);
+
+    // Top-left bevel (light)
+    bg.fillStyle(0x6a6a6a, 1);
+    bg.fillRect(0, 0, size, 2);
+    bg.fillRect(0, 0, 2, size);
+
+    // Bottom-right bevel (dark)
+    bg.fillStyle(0x2a2a2a, 1);
+    bg.fillRect(0, size - 2, size, 2);
+    bg.fillRect(size - 2, 0, 2, size);
+
+    // Inner face
+    bg.fillStyle(0x3d3d3d, 1);
+    bg.fillRect(3, 3, size - 6, size - 6);
+
+    btn.add(bg);
+
+    // Draw icon
+    const icon = this.drawButtonIcon(config.icon, size);
+    icon.setPosition(size / 2, size / 2);
+    btn.add(icon);
+
+    // Hotkey hint (small text in corner)
+    const hotkey = this.add.text(size - 4, size - 4, config.hotkey, {
+      fontFamily: 'Arial',
+      fontSize: '9px',
+      color: '#c9a227',
+      fontStyle: 'bold',
+    });
+    hotkey.setOrigin(1, 1);
+    btn.add(hotkey);
+
+    // Tooltip (shown on hover)
+    const tooltip = this.add.container(size / 2, -8);
+    tooltip.setVisible(false);
+
+    const tooltipBg = this.add.graphics();
+    const tooltipText = this.add.text(0, 0, config.label, {
+      fontFamily: 'Georgia, serif',
+      fontSize: '11px',
+      color: '#f4e4bc',
+    });
+    tooltipText.setOrigin(0.5, 1);
+
+    const tooltipWidth = tooltipText.width + 12;
+    tooltipBg.fillStyle(0x2c1810, 0.95);
+    tooltipBg.fillRoundedRect(-tooltipWidth / 2, -tooltipText.height - 6, tooltipWidth, tooltipText.height + 6, 4);
+    tooltipBg.lineStyle(1, 0xc9a227, 0.8);
+    tooltipBg.strokeRoundedRect(-tooltipWidth / 2, -tooltipText.height - 6, tooltipWidth, tooltipText.height + 6, 4);
+
+    tooltip.add(tooltipBg);
+    tooltip.add(tooltipText);
+    btn.add(tooltip);
+
+    // Make interactive
+    const hitArea = new Phaser.Geom.Rectangle(0, 0, size, size);
+    btn.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+
+    btn.on('pointerover', () => {
+      // Highlight effect
+      bg.clear();
+      bg.fillStyle(0x1a1a1a, 1);
+      bg.fillRect(2, 2, size, size);
+      bg.fillStyle(0x5a5a5a, 1);
+      bg.fillRect(0, 0, size, size);
+      bg.fillStyle(0x7a7a7a, 1);
+      bg.fillRect(0, 0, size, 2);
+      bg.fillRect(0, 0, 2, size);
+      bg.fillStyle(0x3a3a3a, 1);
+      bg.fillRect(0, size - 2, size, 2);
+      bg.fillRect(size - 2, 0, 2, size);
+      bg.fillStyle(0x4d4d4d, 1);
+      bg.fillRect(3, 3, size - 6, size - 6);
+      tooltip.setVisible(true);
+    });
+
+    btn.on('pointerout', () => {
+      // Normal state
+      bg.clear();
+      bg.fillStyle(0x1a1a1a, 1);
+      bg.fillRect(2, 2, size, size);
+      bg.fillStyle(0x4a4a4a, 1);
+      bg.fillRect(0, 0, size, size);
+      bg.fillStyle(0x6a6a6a, 1);
+      bg.fillRect(0, 0, size, 2);
+      bg.fillRect(0, 0, 2, size);
+      bg.fillStyle(0x2a2a2a, 1);
+      bg.fillRect(0, size - 2, size, 2);
+      bg.fillRect(size - 2, 0, 2, size);
+      bg.fillStyle(0x3d3d3d, 1);
+      bg.fillRect(3, 3, size - 6, size - 6);
+      tooltip.setVisible(false);
+    });
+
+    btn.on('pointerdown', () => {
+      // Pressed effect (invert bevel)
+      bg.clear();
+      bg.fillStyle(0x1a1a1a, 1);
+      bg.fillRect(2, 2, size, size);
+      bg.fillStyle(0x3a3a3a, 1);
+      bg.fillRect(0, 0, size, size);
+      bg.fillStyle(0x2a2a2a, 1);
+      bg.fillRect(0, 0, size, 2);
+      bg.fillRect(0, 0, 2, size);
+      bg.fillStyle(0x5a5a5a, 1);
+      bg.fillRect(0, size - 2, size, 2);
+      bg.fillRect(size - 2, 0, 2, size);
+      bg.fillStyle(0x353535, 1);
+      bg.fillRect(3, 3, size - 6, size - 6);
+
+      config.action();
+    });
+
+    btn.on('pointerup', () => {
+      // Return to hover state
+      bg.clear();
+      bg.fillStyle(0x1a1a1a, 1);
+      bg.fillRect(2, 2, size, size);
+      bg.fillStyle(0x5a5a5a, 1);
+      bg.fillRect(0, 0, size, size);
+      bg.fillStyle(0x7a7a7a, 1);
+      bg.fillRect(0, 0, size, 2);
+      bg.fillRect(0, 0, 2, size);
+      bg.fillStyle(0x3a3a3a, 1);
+      bg.fillRect(0, size - 2, size, 2);
+      bg.fillRect(size - 2, 0, 2, size);
+      bg.fillStyle(0x4d4d4d, 1);
+      bg.fillRect(3, 3, size - 6, size - 6);
+    });
+
+    return btn;
+  }
+
+  /**
+   * Draw icon graphics for buttons
+   */
+  private drawButtonIcon(iconType: string, _btnSize: number): Phaser.GameObjects.Graphics {
+    const icon = this.add.graphics();
+    const center = 0;
+
+    switch (iconType) {
+      case 'bag': // Inventory bag
+        icon.fillStyle(0x8b4513, 1);
+        icon.fillRect(center - 8, center - 4, 16, 14);
+        icon.fillStyle(0xa0522d, 1);
+        icon.fillRect(center - 7, center - 3, 14, 12);
+        // Bag opening
+        icon.fillStyle(0x654321, 1);
+        icon.fillRect(center - 5, center - 6, 10, 4);
+        // Strap
+        icon.lineStyle(2, 0x654321, 1);
+        icon.strokeCircle(center, center - 8, 4);
+        break;
+
+      case 'scroll': // Quest scroll
+        icon.fillStyle(0xf4e4bc, 1);
+        icon.fillRect(center - 6, center - 8, 12, 16);
+        // Scroll ends
+        icon.fillStyle(0xc9a227, 1);
+        icon.fillCircle(center - 6, center - 6, 3);
+        icon.fillCircle(center - 6, center + 6, 3);
+        icon.fillCircle(center + 6, center - 6, 3);
+        icon.fillCircle(center + 6, center + 6, 3);
+        // Text lines
+        icon.fillStyle(0x2c1810, 0.6);
+        icon.fillRect(center - 4, center - 4, 8, 1);
+        icon.fillRect(center - 4, center - 1, 8, 1);
+        icon.fillRect(center - 4, center + 2, 6, 1);
+        break;
+
+      case 'contract': // Contract document
+        icon.fillStyle(0xf4e4bc, 1);
+        icon.fillRect(center - 7, center - 9, 14, 18);
+        // Folded corner
+        icon.fillStyle(0xe8d4a8, 1);
+        icon.beginPath();
+        icon.moveTo(center + 3, center - 9);
+        icon.lineTo(center + 7, center - 5);
+        icon.lineTo(center + 7, center - 9);
+        icon.closePath();
+        icon.fillPath();
+        // Wax seal
+        icon.fillStyle(0x8b2500, 1);
+        icon.fillCircle(center, center + 4, 4);
+        icon.fillStyle(0xa83000, 0.5);
+        icon.fillCircle(center - 1, center + 3, 2);
+        break;
+
+      case 'map': // Map icon
+        icon.fillStyle(0xd4a574, 1);
+        icon.fillRect(center - 8, center - 6, 16, 12);
+        // Map border
+        icon.lineStyle(1, 0x654321, 1);
+        icon.strokeRect(center - 8, center - 6, 16, 12);
+        // Map markings
+        icon.fillStyle(0x2c1810, 0.5);
+        icon.fillRect(center - 5, center - 3, 2, 6);
+        icon.fillRect(center + 2, center - 2, 3, 4);
+        // X marks the spot
+        icon.lineStyle(2, 0x8b2500, 1);
+        icon.lineBetween(center - 2, center, center + 1, center + 3);
+        icon.lineBetween(center + 1, center, center - 2, center + 3);
+        break;
+
+      case 'star': // Skills star
+        icon.fillStyle(0xffd700, 1);
+        // 5-pointed star
+        const points: number[] = [];
+        for (let i = 0; i < 10; i++) {
+          const radius = i % 2 === 0 ? 10 : 5;
+          const angle = (i * Math.PI) / 5 - Math.PI / 2;
+          points.push(center + Math.cos(angle) * radius);
+          points.push(center + Math.sin(angle) * radius);
+        }
+        icon.fillPoints(points, true);
+        // Inner glow
+        icon.fillStyle(0xffec8b, 1);
+        icon.fillCircle(center, center, 3);
+        break;
+    }
+
+    return icon;
+  }
+
+  /**
+   * Draw decorative corner piece for the bar
+   */
+  private drawBarCorner(graphics: Phaser.GameObjects.Graphics, x: number, y: number, flip: boolean): void {
+    const dir = flip ? -1 : 1;
+    const startX = flip ? x + 20 : x;
+
+    // Corner bracket
+    graphics.fillStyle(0x6a6a6a, 1);
+    graphics.fillRect(startX, y + 4, 20 * dir, 8);
+    graphics.fillStyle(0x4a4a4a, 1);
+    graphics.fillRect(startX + 2 * dir, y + 6, 16 * dir, 4);
+
+    // Rivet
+    graphics.fillStyle(0x8b8b8b, 1);
+    graphics.fillCircle(startX + 10 * dir, y + 8, 3);
+    graphics.fillStyle(0xb0b0b0, 1);
+    graphics.fillCircle(startX + 9 * dir, y + 7, 1);
+  }
+
+  /**
+   * Placeholder for map functionality
+   */
+  private showMapPlaceholder(): void {
+    // TODO: Implement map panel
+    console.log('Map functionality coming soon');
+  }
+
+  /**
+   * Placeholder for skills functionality
+   */
+  private showSkillsPlaceholder(): void {
+    // TODO: Implement skills panel
+    console.log('Skills functionality coming soon');
   }
 
   private createInventoryPanel(): void {
@@ -759,6 +1164,15 @@ export class UIScene extends Phaser.Scene {
     this.contractPanel.setVisible(this.isContractPanelOpen);
 
     if (this.isContractPanelOpen) {
+      // Close other panels when opening contract panel
+      if (this.isInventoryOpen) {
+        this.isInventoryOpen = false;
+        this.inventoryPanel.setVisible(false);
+      }
+      if (this.isQuestLogOpen) {
+        this.isQuestLogOpen = false;
+        this.questLogPanel.setVisible(false);
+      }
       this.updateContractPanel();
     }
   }
@@ -908,7 +1322,7 @@ export class UIScene extends Phaser.Scene {
 
     // Listen for gold changes from Player
     marketScene.events.on('goldChange', (newGold: number) => {
-      this.goldText.setText(`Gold: ${newGold}`);
+      this.goldText.setText(`${newGold}`);
     });
 
     // Listen for inventory changes from Player
@@ -1015,8 +1429,17 @@ export class UIScene extends Phaser.Scene {
   private toggleInventory(): void {
     this.isInventoryOpen = !this.isInventoryOpen;
     this.inventoryPanel.setVisible(this.isInventoryOpen);
-    
+
     if (this.isInventoryOpen) {
+      // Close other panels when opening inventory
+      if (this.isQuestLogOpen) {
+        this.isQuestLogOpen = false;
+        this.questLogPanel.setVisible(false);
+      }
+      if (this.isContractPanelOpen) {
+        this.isContractPanelOpen = false;
+        this.contractPanel.setVisible(false);
+      }
       this.updateInventoryDisplay();
     }
   }
@@ -1206,8 +1629,30 @@ export class UIScene extends Phaser.Scene {
            good.replace('good_', '').slice(1);
   }
 
+  /**
+   * Get the TradeSystem from MarketScene registry
+   */
+  private getTradeSystem(): any {
+    try {
+      const marketScene = this.scene.get('MarketScene');
+      return marketScene?.registry.get('tradeSystem');
+    } catch (e) {
+      return null;
+    }
+  }
+
   private getGoodPrice(good: string): number {
-    // Base prices (in gold) - historically inspired
+    // Try to use TradeSystem for dynamic pricing
+    const tradeSystem = this.getTradeSystem();
+    if (tradeSystem) {
+      // Use getBasePrice for display (without vendor-specific modifiers)
+      const price = tradeSystem.getBasePrice?.(good, true);
+      if (price && price > 0) {
+        return price;
+      }
+    }
+
+    // Fallback to hardcoded base prices if TradeSystem unavailable
     const prices: { [key: string]: number } = {
       'good_pepper': 15,
       'good_cinnamon': 25,
@@ -1219,6 +1664,24 @@ export class UIScene extends Phaser.Scene {
       'good_indigo': 30,
     };
     return prices[good] || 10;
+  }
+
+  /**
+   * Get sell price for a good - uses TradeSystem if available
+   */
+  private getSellPrice(good: string): number {
+    const tradeSystem = this.getTradeSystem();
+    if (tradeSystem) {
+      // Use getBasePrice for selling (already applies 0.75 multiplier)
+      const price = tradeSystem.getBasePrice?.(good, false);
+      if (price && price > 0) {
+        return price;
+      }
+    }
+
+    // Fallback: use buy price * 0.75 to match TradeSystem
+    const buyPrice = this.getGoodPrice(good);
+    return Math.floor(buyPrice * 0.75);
   }
 
   private buyGood(good: string, price: number): void {
@@ -1234,13 +1697,18 @@ export class UIScene extends Phaser.Scene {
       const success = player.addToInventory(good, 1);
 
       if (!success) {
-        // Inventory full - refund gold
+        // Inventory full - refund gold and show notification
         player.addGold(price);
+        this.scene.get('MarketScene')?.events.emit('notification', {
+          title: 'Inventory Full',
+          message: 'You cannot carry any more items.',
+          type: 'warning'
+        });
         return;
       }
 
       // Update UI to reflect new state
-      this.goldText.setText(`Gold: ${player.getGold()}`);
+      this.goldText.setText(`${player.getGold()}`);
       this.updateInventoryDisplay();
 
       // Emit event to MarketScene
@@ -1254,7 +1722,7 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  private sellGood(good: string, price: number): void {
+  private sellGood(good: string, _price: number): void {
     const marketScene = this.scene.get('MarketScene') as any;
     if (!marketScene?.getPlayer) return;
 
@@ -1267,12 +1735,12 @@ export class UIScene extends Phaser.Scene {
       const success = player.removeFromInventory(good, 1);
       if (!success) return;
 
-      // Sell at 80% of buy price
-      const sellPrice = Math.floor(price * 0.8);
+      // Get sell price from TradeSystem (uses 0.75 multiplier) or fallback
+      const sellPrice = this.getSellPrice(good);
       player.addGold(sellPrice);
 
       // Update UI to reflect new state
-      this.goldText.setText(`Gold: ${player.getGold()}`);
+      this.goldText.setText(`${player.getGold()}`);
       this.updateInventoryDisplay();
 
       // Emit event to MarketScene
@@ -1283,7 +1751,7 @@ export class UIScene extends Phaser.Scene {
   private updateTimeDisplay(timeData: { hour: number; period: string; dayCount: number }): void {
     const ampm = timeData.hour >= 12 ? 'PM' : 'AM';
     const displayHour = timeData.hour > 12 ? timeData.hour - 12 : (timeData.hour === 0 ? 12 : timeData.hour);
-    
+
     this.timeText.setText(`${timeData.period} - ${displayHour}:00 ${ampm} (Day ${timeData.dayCount})`);
 
     // Change text color based on time of day (dark ink that fades slightly)
@@ -1294,5 +1762,38 @@ export class UIScene extends Phaser.Scene {
     } else {
       this.timeText.setColor('#2c1810');
     }
+  }
+
+  /**
+   * Clean up all event listeners and resources when scene shuts down
+   */
+  shutdown(): void {
+    // Remove MarketScene event listeners
+    const marketScene = this.scene.get('MarketScene');
+    if (marketScene) {
+      marketScene.events.off('timeUpdate');
+      marketScene.events.off('openTrade');
+      marketScene.events.off('goldChange');
+      marketScene.events.off('inventoryChange');
+      marketScene.events.off('showTransitionPrompt');
+      marketScene.events.off('hideTransitionPrompt');
+      marketScene.events.off('questOffer');
+      marketScene.events.off('questStateChange');
+      marketScene.events.off('rankUp');
+      marketScene.events.off('progressionUpdate');
+      marketScene.events.off('contractAccepted');
+      marketScene.events.off('contractCompleted');
+      marketScene.events.off('contractFailed');
+      marketScene.events.off('contractsRefreshed');
+    }
+
+    // Remove keyboard event listeners
+    this.input.keyboard?.off('keydown-I');
+    this.input.keyboard?.off('keydown-J');
+    this.input.keyboard?.off('keydown-C');
+    this.input.keyboard?.off('keydown-ESC');
+
+    // Clean up action buttons
+    this.actionButtons.clear();
   }
 }

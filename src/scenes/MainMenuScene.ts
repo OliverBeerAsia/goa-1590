@@ -1,16 +1,31 @@
 import Phaser from 'phaser';
+import { IntroArtGenerator } from '../art/generators/IntroArtGenerator';
+import { GOLD, WATER_HARBOR, WOOD_DARK } from '../art/palette';
 
 /**
- * MainMenuScene - The game's main menu
- * Features a parchment-style design with the game title and navigation options
+ * MainMenuScene - Atmospheric late 90s RPG-style main menu
+ *
+ * Features:
+ * - Dark gradient sky background
+ * - Goa cityscape silhouette
+ * - Distant ship silhouettes
+ * - Gothic frame with gold inlay
+ * - Torch flicker effects
+ * - Beveled metal menu buttons
+ * - Dust particle ambiance
+ *
+ * Inspired by: Baldur's Gate, Diablo II menu screens
  */
 export class MainMenuScene extends Phaser.Scene {
   private titleText!: Phaser.GameObjects.Text;
   private subtitleText!: Phaser.GameObjects.Text;
   private menuContainer!: Phaser.GameObjects.Container;
   private selectedIndex = 0;
-  private menuItems: Phaser.GameObjects.Text[] = [];
+  private menuItems: Phaser.GameObjects.Container[] = [];
   private hasSaveData = false;
+  private artGenerator!: IntroArtGenerator;
+  private dustParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private torchLights: Phaser.GameObjects.PointLight[] = [];
 
   constructor() {
     super({ key: 'MainMenuScene' });
@@ -20,8 +35,14 @@ export class MainMenuScene extends Phaser.Scene {
     // Check for existing save data
     this.hasSaveData = this.checkForSaveData();
 
-    // Create the parchment background
-    this.createBackground();
+    // Initialize art generator
+    this.artGenerator = new IntroArtGenerator(this);
+
+    // Create the atmospheric background
+    this.createAtmosphericBackground();
+
+    // Create gothic frame
+    this.createGothicFrame();
 
     // Create title
     this.createTitle();
@@ -32,19 +53,21 @@ export class MainMenuScene extends Phaser.Scene {
     // Set up input handlers
     this.setupInput();
 
-    // Add decorative elements
-    this.createDecorations();
+    // Create ambient effects
+    this.createAmbientEffects();
 
     // Add historical quote
     this.createQuote();
 
     // Play ambient sound if available
     this.playAmbientSound();
+
+    // Fade in
+    this.cameras.main.fadeIn(800, 0, 0, 0);
   }
 
   private checkForSaveData(): boolean {
     try {
-      // Check for saves using the same key format as SaveSystem
       const autoSave = localStorage.getItem('goa_trade_autosave');
       const manualSave1 = localStorage.getItem('goa_trade_save_1');
       const manualSave2 = localStorage.getItem('goa_trade_save_2');
@@ -55,123 +78,255 @@ export class MainMenuScene extends Phaser.Scene {
     }
   }
 
-  private createBackground(): void {
+  private createAtmosphericBackground(): void {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    const graphics = this.add.graphics();
-
-    // Base parchment color
-    graphics.fillStyle(0xf4e4bc, 1);
-    graphics.fillRect(0, 0, width, height);
-
-    // Add aging texture with subtle stains
-    graphics.fillStyle(0xe8d4a8, 0.3);
-    for (let i = 0; i < 80; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = 15 + Math.random() * 40;
-      graphics.fillCircle(x, y, size);
+    // Sky gradient (dark blue to near-black)
+    const sky = this.add.graphics();
+    const skySteps = 40;
+    for (let i = 0; i < skySteps; i++) {
+      const ratio = i / skySteps;
+      const color = this.lerpColor(0x040810, 0x0a1a2a, 1 - ratio);
+      sky.fillStyle(color, 1);
+      sky.fillRect(0, (i / skySteps) * height * 0.65, width, (height * 0.65) / skySteps + 1);
     }
 
-    // Darker edges (vignette effect)
-    graphics.fillStyle(0xd4c4a0, 0.5);
-    graphics.fillRect(0, 0, width, 30);
-    graphics.fillRect(0, height - 30, width, 30);
-    graphics.fillRect(0, 0, 30, height);
-    graphics.fillRect(width - 30, 0, 30, height);
+    // Stars (subtle)
+    const stars = this.add.graphics();
+    stars.fillStyle(0xffffff, 0.3);
+    for (let i = 0; i < 50; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height * 0.5;
+      const size = Math.random() > 0.9 ? 2 : 1;
+      stars.fillCircle(x, y, size);
+    }
 
-    // Corner aging
-    graphics.fillStyle(0xc8b080, 0.4);
-    graphics.fillTriangle(0, 0, 100, 0, 0, 100);
-    graphics.fillTriangle(width, 0, width - 100, 0, width, 100);
-    graphics.fillTriangle(0, height, 100, height, 0, height - 100);
-    graphics.fillTriangle(width, height, width - 100, height, width, height - 100);
+    // Moon (subtle glow)
+    const moonX = width * 0.85;
+    const moonY = height * 0.15;
+    const moonGlow = this.add.graphics();
+    moonGlow.fillStyle(0xf0e8d0, 0.03);
+    moonGlow.fillCircle(moonX, moonY, 60);
+    moonGlow.fillStyle(0xf0e8d0, 0.05);
+    moonGlow.fillCircle(moonX, moonY, 40);
+    moonGlow.fillStyle(0xf0e8d0, 0.1);
+    moonGlow.fillCircle(moonX, moonY, 20);
 
-    // Decorative border
-    this.createBorder(graphics, width, height);
+    // Distant ship silhouettes on horizon
+    this.createDistantShips(width, height);
+
+    // Water layer
+    const waterY = height * 0.65;
+    const water = this.add.graphics();
+    for (let i = 0; i < height - waterY; i += 3) {
+      const ratio = i / (height - waterY);
+      const color = this.lerpColor(WATER_HARBOR.deep, WATER_HARBOR.shadow, ratio * 0.3);
+      water.fillStyle(color, 0.9);
+      water.fillRect(0, waterY + i, width, 3);
+    }
+
+    // Water shimmer effect (animated in update if needed)
+    const shimmer = this.add.graphics();
+    shimmer.lineStyle(1, WATER_HARBOR.highlight, 0.15);
+    for (let row = 0; row < 8; row++) {
+      shimmer.beginPath();
+      const rowY = waterY + 15 + row * 12;
+      for (let x = 0; x <= width; x += 10) {
+        const y = rowY + Math.sin(x * 0.015 + row * 0.5) * 2;
+        if (x === 0) shimmer.moveTo(x, y);
+        else shimmer.lineTo(x, y);
+      }
+      shimmer.strokePath();
+    }
+
+    // Moon reflection on water
+    const moonReflection = this.add.graphics();
+    moonReflection.fillStyle(0xf0e8d0, 0.05);
+    for (let i = 0; i < 15; i++) {
+      const reflectY = waterY + 10 + i * 8;
+      const reflectWidth = 20 - i * 1;
+      moonReflection.fillRect(moonX - reflectWidth / 2, reflectY, reflectWidth, 3);
+    }
+
+    // Cityscape silhouette
+    const cityscape = this.artGenerator.generateGoaCityscape(width, height * 0.4);
+    cityscape.setPosition(0, height * 0.45);
   }
 
-  private createBorder(graphics: Phaser.GameObjects.Graphics, width: number, height: number): void {
-    const borderWidth = 10;
+  private createDistantShips(width: number, height: number): void {
+    const horizonY = height * 0.62;
+    const g = this.add.graphics();
+    g.fillStyle(0x0a0a0a, 0.6);
 
-    // Outer border (dark wood)
-    graphics.fillStyle(0x2c1810, 1);
-    graphics.fillRect(0, 0, width, borderWidth);
-    graphics.fillRect(0, height - borderWidth, width, borderWidth);
-    graphics.fillRect(0, 0, borderWidth, height);
-    graphics.fillRect(width - borderWidth, 0, borderWidth, height);
+    // Ship 1 (left)
+    this.drawSmallShipSilhouette(g, width * 0.15, horizonY, 0.5);
 
-    // Inner gold accent line
-    graphics.lineStyle(3, 0xc9a227, 0.8);
-    graphics.strokeRect(borderWidth + 6, borderWidth + 6, width - borderWidth * 2 - 12, height - borderWidth * 2 - 12);
+    // Ship 2 (right)
+    this.drawSmallShipSilhouette(g, width * 0.78, horizonY, 0.4);
+  }
+
+  private drawSmallShipSilhouette(g: Phaser.GameObjects.Graphics, x: number, y: number, scale: number): void {
+    // Simple ship silhouette
+    g.beginPath();
+    g.moveTo(x - 30 * scale, y);
+    g.lineTo(x - 35 * scale, y - 5 * scale);
+    g.lineTo(x - 25 * scale, y - 10 * scale);
+    g.lineTo(x + 25 * scale, y - 10 * scale);
+    g.lineTo(x + 35 * scale, y - 5 * scale);
+    g.lineTo(x + 30 * scale, y);
+    g.closePath();
+    g.fillPath();
+
+    // Mast
+    g.fillRect(x - 2 * scale, y - 45 * scale, 4 * scale, 40 * scale);
+
+    // Sail
+    g.beginPath();
+    g.moveTo(x, y - 42 * scale);
+    g.lineTo(x + 20 * scale, y - 25 * scale);
+    g.lineTo(x, y - 15 * scale);
+    g.closePath();
+    g.fillPath();
+  }
+
+  private createGothicFrame(): void {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+    const frameWidth = 14;
+
+    const frame = this.add.graphics();
+
+    // Outer dark wood frame
+    frame.fillStyle(WOOD_DARK.deep, 1);
+    frame.fillRect(0, 0, width, frameWidth);
+    frame.fillRect(0, height - frameWidth, width, frameWidth);
+    frame.fillRect(0, 0, frameWidth, height);
+    frame.fillRect(width - frameWidth, 0, frameWidth, height);
+
+    // Gold inlay lines
+    frame.lineStyle(2, GOLD.shadow, 0.7);
+    frame.strokeRect(frameWidth + 6, frameWidth + 6, width - frameWidth * 2 - 12, height - frameWidth * 2 - 12);
 
     // Corner ornaments
-    this.drawCornerOrnament(graphics, borderWidth + 4, borderWidth + 4);
-    this.drawCornerOrnament(graphics, width - borderWidth - 28, borderWidth + 4, true);
-    this.drawCornerOrnament(graphics, borderWidth + 4, height - borderWidth - 28, false, true);
-    this.drawCornerOrnament(graphics, width - borderWidth - 28, height - borderWidth - 28, true, true);
+    this.drawCornerOrnament(frame, frameWidth, frameWidth, 1, 1);
+    this.drawCornerOrnament(frame, width - frameWidth, frameWidth, -1, 1);
+    this.drawCornerOrnament(frame, frameWidth, height - frameWidth, 1, -1);
+    this.drawCornerOrnament(frame, width - frameWidth, height - frameWidth, -1, -1);
+
+    // Torch brackets
+    this.createTorchBracket(width * 0.2, frameWidth);
+    this.createTorchBracket(width * 0.8, frameWidth);
   }
 
-  private drawCornerOrnament(graphics: Phaser.GameObjects.Graphics, x: number, y: number, flipX = false, flipY = false): void {
-    const size = 24;
-    const sx = flipX ? -1 : 1;
-    const sy = flipY ? -1 : 1;
-    const ox = flipX ? x + size : x;
-    const oy = flipY ? y + size : y;
+  private drawCornerOrnament(g: Phaser.GameObjects.Graphics, x: number, y: number, flipX: number, flipY: number): void {
+    const size = 30;
 
-    graphics.fillStyle(0xc9a227, 0.9);
-    graphics.fillRect(ox, oy, sx * 20, sy * 4);
-    graphics.fillRect(ox, oy, sx * 4, sy * 20);
-    graphics.fillRect(ox + sx * 6, oy + sy * 6, sx * 10, sy * 2);
-    graphics.fillRect(ox + sx * 6, oy + sy * 6, sx * 2, sy * 10);
-    graphics.fillCircle(ox + sx * 10, oy + sy * 10, 3);
+    g.fillStyle(GOLD.shadow, 0.9);
+    g.fillRect(x, y, flipX * size, flipY * 5);
+    g.fillRect(x, y, flipX * 5, flipY * size);
+
+    g.fillStyle(GOLD.base, 0.8);
+    g.fillRect(x + flipX * 8, y + flipY * 8, flipX * 16, flipY * 3);
+    g.fillRect(x + flipX * 8, y + flipY * 8, flipX * 3, flipY * 16);
+
+    g.fillCircle(x + flipX * 14, y + flipY * 14, 4);
+    g.fillStyle(WOOD_DARK.base, 1);
+    g.fillCircle(x + flipX * 14, y + flipY * 14, 2);
+  }
+
+  private createTorchBracket(x: number, frameTop: number): void {
+    const g = this.add.graphics();
+    const y = frameTop + 25;
+
+    // Bracket
+    g.fillStyle(0x3a3a3a, 1);
+    g.fillRect(x - 6, frameTop + 5, 12, 8);
+    g.fillRect(x - 4, frameTop + 13, 8, 15);
+
+    // Torch cup
+    g.fillStyle(0x2a2a2a, 1);
+    g.beginPath();
+    g.moveTo(x - 8, y + 3);
+    g.lineTo(x + 8, y + 3);
+    g.lineTo(x + 5, y + 15);
+    g.lineTo(x - 5, y + 15);
+    g.closePath();
+    g.fillPath();
+
+    // Add point light for torch glow
+    const light = this.add.pointlight(x, y + 5, 0xffaa33, 80, 0.4);
+    this.torchLights.push(light);
+
+    // Animate torch flicker
+    this.tweens.add({
+      targets: light,
+      intensity: { from: 0.3, to: 0.5 },
+      radius: { from: 70, to: 90 },
+      duration: 150 + Math.random() * 100,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 
   private createTitle(): void {
     const width = this.cameras.main.width;
 
-    // Drop shadow for title
+    // Title shadow
     const shadowText = this.add.text(width / 2 + 3, 83, 'GOA 1590', {
       fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: '72px',
+      fontSize: '64px',
       color: '#000000',
       fontStyle: 'bold',
     });
     shadowText.setOrigin(0.5);
-    shadowText.setAlpha(0.2);
+    shadowText.setAlpha(0.5);
 
-    // Main title
+    // Embossed gold title
     this.titleText = this.add.text(width / 2, 80, 'GOA 1590', {
       fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: '72px',
-      color: '#2c1810',
+      fontSize: '64px',
+      color: '#ffd700',
       fontStyle: 'bold',
     });
     this.titleText.setOrigin(0.5);
 
-    // Subtitle
-    this.subtitleText = this.add.text(width / 2, 150, 'The Rome of the East', {
+    // Highlight line above title
+    const highlight = this.add.graphics();
+    highlight.lineStyle(1, 0xfff0a0, 0.5);
+    highlight.lineBetween(width / 2 - 160, 48, width / 2 + 160, 48);
+
+    // Subtitle with parchment banner
+    const bannerWidth = 280;
+    const bannerHeight = 32;
+    const banner = this.add.graphics();
+    banner.fillStyle(0xf4e4bc, 0.85);
+    banner.fillRoundedRect(width / 2 - bannerWidth / 2, 130, bannerWidth, bannerHeight, 4);
+    banner.lineStyle(2, GOLD.shadow, 0.6);
+    banner.strokeRoundedRect(width / 2 - bannerWidth / 2, 130, bannerWidth, bannerHeight, 4);
+
+    this.subtitleText = this.add.text(width / 2, 146, 'The Rome of the East', {
       fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: '24px',
-      color: '#5a4030',
+      fontSize: '18px',
+      color: '#4a3020',
       fontStyle: 'italic',
     });
     this.subtitleText.setOrigin(0.5);
 
-    // Decorative line under title
-    const graphics = this.add.graphics();
-    graphics.lineStyle(2, 0xc9a227, 0.8);
-    graphics.lineBetween(width / 2 - 150, 175, width / 2 + 150, 175);
-    graphics.fillStyle(0xc9a227, 1);
-    graphics.fillCircle(width / 2, 175, 5);
+    // Decorative line under title section
+    const decorLine = this.add.graphics();
+    decorLine.lineStyle(2, GOLD.shadow, 0.5);
+    decorLine.lineBetween(width / 2 - 150, 175, width / 2 + 150, 175);
+    decorLine.fillStyle(GOLD.base, 1);
+    decorLine.fillCircle(width / 2, 175, 4);
   }
 
   private createMenu(): void {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    this.menuContainer = this.add.container(width / 2, height / 2 + 20);
+    this.menuContainer = this.add.container(width / 2, height / 2 + 40);
 
     const menuOptions = [
       { text: 'New Game', action: () => this.startNewGame() },
@@ -182,52 +337,43 @@ export class MainMenuScene extends Phaser.Scene {
 
     menuOptions.forEach((option, index) => {
       const isEnabled = option.enabled !== false;
-      const yOffset = index * 50;
+      const yOffset = index * 55;
 
-      // Menu item background (parchment button)
-      const bg = this.add.graphics();
-      bg.fillStyle(isEnabled ? 0xf4e4bc : 0xe8d8b0, 0.9);
-      bg.fillRoundedRect(-100, yOffset - 18, 200, 36, 6);
-      bg.lineStyle(2, isEnabled ? 0x8b6914 : 0xa0a090, 0.8);
-      bg.strokeRoundedRect(-100, yOffset - 18, 200, 36, 6);
-      this.menuContainer.add(bg);
+      const buttonContainer = this.add.container(0, yOffset);
 
-      // Menu item text
-      const text = this.add.text(0, yOffset, option.text, {
+      // Create metal-style button
+      const button = this.createMetalButton(220, 40, isEnabled);
+      buttonContainer.add(button);
+
+      // Button text
+      const text = this.add.text(0, 0, option.text, {
         fontFamily: 'Georgia, "Times New Roman", serif',
-        fontSize: '22px',
-        color: isEnabled ? '#2c1810' : '#8a8a80',
+        fontSize: '20px',
+        color: isEnabled ? '#2c1810' : '#6a6a6a',
         fontStyle: isEnabled ? 'normal' : 'italic',
       });
       text.setOrigin(0.5);
-      text.setData('action', option.action);
-      text.setData('enabled', isEnabled);
-      text.setData('index', index);
-      text.setData('bg', bg);
-      this.menuContainer.add(text);
+      buttonContainer.add(text);
+
+      buttonContainer.setData('action', option.action);
+      buttonContainer.setData('enabled', isEnabled);
+      buttonContainer.setData('index', index);
+      buttonContainer.setData('text', text);
+      buttonContainer.setData('button', button);
 
       if (isEnabled) {
-        // Create an invisible interactive zone covering the whole button area
-        const hitZone = this.add.zone(0, yOffset, 200, 36).setInteractive({ useHandCursor: true });
+        const hitZone = this.add.zone(0, 0, 220, 40).setInteractive({ useHandCursor: true });
         hitZone.on('pointerover', () => this.highlightMenuItem(index));
         hitZone.on('pointerout', () => this.unhighlightMenuItem(index));
         hitZone.on('pointerdown', () => {
-          console.log('Menu clicked:', option.text);
+          this.pressMenuItem(index);
           option.action();
         });
-        this.menuContainer.add(hitZone);
-
-        // Also make text interactive as backup
-        text.setInteractive({ useHandCursor: true });
-        text.on('pointerover', () => this.highlightMenuItem(index));
-        text.on('pointerout', () => this.unhighlightMenuItem(index));
-        text.on('pointerdown', () => {
-          console.log('Text clicked:', option.text);
-          option.action();
-        });
+        buttonContainer.add(hitZone);
       }
 
-      this.menuItems.push(text);
+      this.menuContainer.add(buttonContainer);
+      this.menuItems.push(buttonContainer);
     });
 
     // Highlight first enabled item
@@ -236,28 +382,79 @@ export class MainMenuScene extends Phaser.Scene {
     this.highlightMenuItem(this.selectedIndex);
   }
 
+  private createMetalButton(width: number, height: number, enabled: boolean): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    const hw = width / 2;
+    const hh = height / 2;
+
+    // Button base colors
+    const frameColor = enabled ? 0x3a3a3a : 0x2a2a2a;
+    const lightBevel = enabled ? 0x5a5a5a : 0x3a3a3a;
+    const darkBevel = enabled ? 0x1a1a1a : 0x1a1a1a;
+    const fillColor = enabled ? 0xf4e4bc : 0xd8d0c0;
+
+    // Outer metal frame
+    g.fillStyle(frameColor, 1);
+    g.fillRoundedRect(-hw - 4, -hh - 4, width + 8, height + 8, 4);
+
+    // Light bevel (top-left)
+    g.fillStyle(lightBevel, 1);
+    g.fillRect(-hw - 2, -hh - 2, width + 2, 3);
+    g.fillRect(-hw - 2, -hh - 2, 3, height + 2);
+
+    // Dark bevel (bottom-right)
+    g.fillStyle(darkBevel, 1);
+    g.fillRect(-hw - 1, hh - 1, width + 3, 3);
+    g.fillRect(hw - 1, -hh - 1, 3, height + 3);
+
+    // Inner parchment fill
+    g.fillStyle(fillColor, 1);
+    g.fillRoundedRect(-hw, -hh, width, height, 2);
+
+    return g;
+  }
+
   private highlightMenuItem(index: number): void {
-    const text = this.menuItems[index];
-    if (!text || !text.getData('enabled')) return;
+    const container = this.menuItems[index];
+    if (!container || !container.getData('enabled')) return;
 
     this.selectedIndex = index;
 
-    // Update all items
     this.menuItems.forEach((item, i) => {
-      const bg = item.getData('bg') as Phaser.GameObjects.Graphics;
       const isSelected = i === index;
       const isEnabled = item.getData('enabled');
+      const text = item.getData('text') as Phaser.GameObjects.Text;
+      const button = item.getData('button') as Phaser.GameObjects.Graphics;
 
       if (isEnabled) {
-        item.setColor(isSelected ? '#8b6914' : '#2c1810');
-        item.setScale(isSelected ? 1.1 : 1);
+        text.setColor(isSelected ? '#c9a227' : '#2c1810');
+        item.setScale(isSelected ? 1.05 : 1);
 
-        // Redraw background with highlight
-        bg.clear();
-        bg.fillStyle(isSelected ? 0xfff8e8 : 0xf4e4bc, 0.9);
-        bg.fillRoundedRect(-100, i * 50 - 18, 200, 36, 6);
-        bg.lineStyle(2, isSelected ? 0xc9a227 : 0x8b6914, isSelected ? 1 : 0.8);
-        bg.strokeRoundedRect(-100, i * 50 - 18, 200, 36, 6);
+        // Redraw button with highlight
+        button.clear();
+        const hw = 110;
+        const hh = 20;
+        const frameColor = isSelected ? 0x4a4a4a : 0x3a3a3a;
+        const lightBevel = isSelected ? 0x6a6a6a : 0x5a5a5a;
+        const darkBevel = 0x1a1a1a;
+        const fillColor = isSelected ? 0xfff8e8 : 0xf4e4bc;
+
+        button.fillStyle(frameColor, 1);
+        button.fillRoundedRect(-hw - 4, -hh - 4, 220 + 8, 40 + 8, 4);
+        button.fillStyle(lightBevel, 1);
+        button.fillRect(-hw - 2, -hh - 2, 220 + 2, 3);
+        button.fillRect(-hw - 2, -hh - 2, 3, 40 + 2);
+        button.fillStyle(darkBevel, 1);
+        button.fillRect(-hw - 1, hh - 1, 220 + 3, 3);
+        button.fillRect(hw - 1, -hh - 1, 3, 40 + 3);
+        button.fillStyle(fillColor, 1);
+        button.fillRoundedRect(-hw, -hh, 220, 40, 2);
+
+        // Add gold border on selected
+        if (isSelected) {
+          button.lineStyle(2, GOLD.shadow, 0.8);
+          button.strokeRoundedRect(-hw, -hh, 220, 40, 2);
+        }
       }
     });
   }
@@ -265,22 +462,30 @@ export class MainMenuScene extends Phaser.Scene {
   private unhighlightMenuItem(index: number): void {
     if (this.selectedIndex === index) return;
 
-    const text = this.menuItems[index];
-    if (!text || !text.getData('enabled')) return;
+    const container = this.menuItems[index];
+    if (!container || !container.getData('enabled')) return;
 
-    const bg = text.getData('bg') as Phaser.GameObjects.Graphics;
+    container.setScale(1);
+    const text = container.getData('text') as Phaser.GameObjects.Text;
     text.setColor('#2c1810');
-    text.setScale(1);
+  }
 
-    bg.clear();
-    bg.fillStyle(0xf4e4bc, 0.9);
-    bg.fillRoundedRect(-100, index * 50 - 18, 200, 36, 6);
-    bg.lineStyle(2, 0x8b6914, 0.8);
-    bg.strokeRoundedRect(-100, index * 50 - 18, 200, 36, 6);
+  private pressMenuItem(index: number): void {
+    const container = this.menuItems[index];
+    if (!container) return;
+
+    // Animate button press (invert bevel briefly)
+    this.tweens.add({
+      targets: container,
+      scaleX: 0.98,
+      scaleY: 0.98,
+      duration: 50,
+      yoyo: true,
+      ease: 'Power2',
+    });
   }
 
   private setupInput(): void {
-    // Keyboard navigation
     this.input.keyboard?.on('keydown-UP', () => {
       let newIndex = this.selectedIndex - 1;
       while (newIndex >= 0 && !this.menuItems[newIndex].getData('enabled')) {
@@ -303,111 +508,42 @@ export class MainMenuScene extends Phaser.Scene {
 
     this.input.keyboard?.on('keydown-ENTER', () => {
       const action = this.menuItems[this.selectedIndex].getData('action');
-      if (action) action();
+      if (action) {
+        this.pressMenuItem(this.selectedIndex);
+        action();
+      }
     });
 
     this.input.keyboard?.on('keydown-SPACE', () => {
       const action = this.menuItems[this.selectedIndex].getData('action');
-      if (action) action();
+      if (action) {
+        this.pressMenuItem(this.selectedIndex);
+        action();
+      }
     });
   }
 
-  private createDecorations(): void {
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
-
-    // Compass rose (bottom left)
-    this.drawCompassRose(80, height - 80, 45);
-
-    // Compass rose (bottom right)
-    this.drawCompassRose(width - 80, height - 80, 45);
-
-    // Ship silhouette (subtle decoration)
-    this.drawShipSilhouette(width - 150, 250);
-  }
-
-  private drawCompassRose(cx: number, cy: number, size: number): void {
-    const g = this.add.graphics();
-
-    // Outer circle
-    g.lineStyle(2, 0xc9a227, 0.6);
-    g.strokeCircle(cx, cy, size);
-
-    // Inner circle
-    g.lineStyle(1, 0xc9a227, 0.4);
-    g.strokeCircle(cx, cy, size * 0.7);
-
-    // Cardinal points
-    const points = [
-      { angle: -Math.PI / 2, isNorth: true },
-      { angle: Math.PI / 2, isNorth: false },
-      { angle: 0, isNorth: false },
-      { angle: Math.PI, isNorth: false },
-    ];
-
-    for (const point of points) {
-      const tipX = cx + Math.cos(point.angle) * (size * 0.9);
-      const tipY = cy + Math.sin(point.angle) * (size * 0.9);
-      const baseWidth = 5;
-
-      const leftAngle = point.angle + Math.PI / 2;
-      const rightAngle = point.angle - Math.PI / 2;
-      const baseLeftX = cx + Math.cos(leftAngle) * baseWidth;
-      const baseLeftY = cy + Math.sin(leftAngle) * baseWidth;
-      const baseRightX = cx + Math.cos(rightAngle) * baseWidth;
-      const baseRightY = cy + Math.sin(rightAngle) * baseWidth;
-
-      g.fillStyle(point.isNorth ? 0xa02020 : 0xc9a227, 0.8);
-      g.beginPath();
-      g.moveTo(tipX, tipY);
-      g.lineTo(baseLeftX, baseLeftY);
-      g.lineTo(baseRightX, baseRightY);
-      g.closePath();
-      g.fillPath();
+  private createAmbientEffects(): void {
+    // Dust particles
+    if (!this.textures.exists('effect_dust')) {
+      const g = this.make.graphics({ x: 0, y: 0 });
+      g.fillStyle(0xd4a574, 0.4);
+      g.fillCircle(2, 2, 2);
+      g.generateTexture('effect_dust', 4, 4);
+      g.destroy();
     }
 
-    // Center dot
-    g.fillStyle(0x2c1810, 1);
-    g.fillCircle(cx, cy, 4);
-    g.fillStyle(0xc9a227, 1);
-    g.fillCircle(cx, cy, 2);
-  }
-
-  private drawShipSilhouette(x: number, y: number): void {
-    const g = this.add.graphics();
-    g.fillStyle(0xc9a227, 0.15);
-
-    // Hull
-    g.beginPath();
-    g.moveTo(x, y + 30);
-    g.lineTo(x + 60, y + 20);
-    g.lineTo(x + 80, y + 30);
-    g.lineTo(x + 70, y + 40);
-    g.lineTo(x + 10, y + 40);
-    g.closePath();
-    g.fillPath();
-
-    // Main mast
-    g.fillRect(x + 35, y - 40, 4, 70);
-
-    // Sail
-    g.beginPath();
-    g.moveTo(x + 37, y - 35);
-    g.lineTo(x + 65, y);
-    g.lineTo(x + 37, y + 10);
-    g.closePath();
-    g.fillPath();
-
-    // Fore mast
-    g.fillRect(x + 55, y - 20, 3, 50);
-
-    // Fore sail
-    g.beginPath();
-    g.moveTo(x + 56, y - 15);
-    g.lineTo(x + 75, y);
-    g.lineTo(x + 56, y + 10);
-    g.closePath();
-    g.fillPath();
+    this.dustParticles = this.add.particles(0, 0, 'effect_dust', {
+      x: { min: 0, max: this.scale.width },
+      y: { min: 0, max: this.scale.height },
+      lifespan: 10000,
+      speedX: { min: -5, max: 5 },
+      speedY: { min: -3, max: 3 },
+      scale: { start: 0.4, end: 0.1 },
+      alpha: { start: 0.2, end: 0 },
+      frequency: 400,
+      blendMode: Phaser.BlendModes.ADD,
+    });
   }
 
   private createQuote(): void {
@@ -415,21 +551,21 @@ export class MainMenuScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     const quotes = [
-      '"In Goa, all the nations of the world come to trade." - Jan Huygen van Linschoten',
-      '"The pepper trade is the soul of this commerce." - Portuguese merchant',
-      '"Whoever is lord of Malacca has his hand on the throat of Venice." - Tome Pires',
-      '"Goa is the Rome of the East." - Contemporary description, 1590',
-      '"Fortune favors the bold." - Portuguese merchant wisdom',
+      '"In Goa, all the nations of the world come to trade." — Linschoten',
+      '"The pepper trade is the soul of this commerce." — Portuguese merchant',
+      '"Whoever is lord of Malacca has his hand on the throat of Venice." — Tome Pires',
+      '"Goa is the Rome of the East." — Contemporary description',
+      '"Fortune favors the bold." — Portuguese merchant wisdom',
     ];
 
     const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
-    const quoteText = this.add.text(width / 2, height - 50, quote, {
+    const quoteText = this.add.text(width / 2, height - 45, quote, {
       fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: '14px',
-      color: '#6a5040',
+      fontSize: '13px',
+      color: '#8b7355',
       fontStyle: 'italic',
-      wordWrap: { width: width * 0.8 },
+      wordWrap: { width: width * 0.7 },
       align: 'center',
     });
     quoteText.setOrigin(0.5);
@@ -443,20 +579,20 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private startNewGame(): void {
-    console.log('MainMenuScene: Starting new game...');
-    // Start game directly without fade (simpler)
-    this.scene.start('MarketScene');
-    this.scene.launch('UIScene');
+    this.dustParticles?.stop();
+    this.cameras.main.fadeOut(800, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.start('MarketScene');
+      this.scene.launch('UIScene');
+    });
   }
 
   private continueGame(): void {
     if (!this.hasSaveData) return;
 
-    // Fade out and load game
+    this.dustParticles?.stop();
     this.cameras.main.fadeOut(800, 0, 0, 0);
-
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      // Set flag to tell MarketScene to load saved game after initialization
       this.registry.set('loadSaveOnStart', true);
       this.scene.start('MarketScene');
       this.scene.launch('UIScene');
@@ -464,24 +600,23 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private openSettings(): void {
-    // For now, show a simple message
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
     const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.5);
+    overlay.fillStyle(0x000000, 0.7);
     overlay.fillRect(0, 0, width, height);
 
     const panel = this.add.graphics();
-    panel.fillStyle(0xf4e4bc, 0.95);
+    panel.fillStyle(0x1a1a2a, 0.95);
     panel.fillRoundedRect(width / 2 - 150, height / 2 - 100, 300, 200, 10);
-    panel.lineStyle(3, 0x2c1810, 1);
+    panel.lineStyle(2, GOLD.shadow, 0.8);
     panel.strokeRoundedRect(width / 2 - 150, height / 2 - 100, 300, 200, 10);
 
     const settingsTitle = this.add.text(width / 2, height / 2 - 70, 'Settings', {
       fontFamily: 'Georgia, serif',
       fontSize: '24px',
-      color: '#2c1810',
+      color: '#ffd700',
       fontStyle: 'bold',
     });
     settingsTitle.setOrigin(0.5);
@@ -489,25 +624,33 @@ export class MainMenuScene extends Phaser.Scene {
     const comingSoon = this.add.text(width / 2, height / 2, 'Settings coming soon...', {
       fontFamily: 'Georgia, serif',
       fontSize: '16px',
-      color: '#5a4030',
+      color: '#a0a0a0',
       fontStyle: 'italic',
     });
     comingSoon.setOrigin(0.5);
 
-    const closeBtn = this.add.text(width / 2, height / 2 + 60, '[Close]', {
+    const closeBtn = this.add.text(width / 2, height / 2 + 60, '[ Close ]', {
       fontFamily: 'Georgia, serif',
       fontSize: '18px',
-      color: '#8b6914',
+      color: '#c9a227',
     });
     closeBtn.setOrigin(0.5);
     closeBtn.setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => {
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ffd700'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#c9a227'));
+
+    const closeDialog = () => {
       overlay.destroy();
       panel.destroy();
       settingsTitle.destroy();
       comingSoon.destroy();
       closeBtn.destroy();
-    });
+    };
+
+    closeBtn.on('pointerdown', closeDialog);
+
+    // ESC key to close dialog
+    this.input.keyboard?.once('keydown-ESC', closeDialog);
   }
 
   private showCredits(): void {
@@ -515,19 +658,19 @@ export class MainMenuScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.5);
+    overlay.fillStyle(0x000000, 0.7);
     overlay.fillRect(0, 0, width, height);
 
     const panel = this.add.graphics();
-    panel.fillStyle(0xf4e4bc, 0.95);
+    panel.fillStyle(0x1a1a2a, 0.95);
     panel.fillRoundedRect(width / 2 - 200, height / 2 - 150, 400, 300, 10);
-    panel.lineStyle(3, 0x2c1810, 1);
+    panel.lineStyle(2, GOLD.shadow, 0.8);
     panel.strokeRoundedRect(width / 2 - 200, height / 2 - 150, 400, 300, 10);
 
     const creditsTitle = this.add.text(width / 2, height / 2 - 120, 'Credits', {
       fontFamily: 'Georgia, serif',
       fontSize: '24px',
-      color: '#2c1810',
+      color: '#ffd700',
       fontStyle: 'bold',
     });
     creditsTitle.setOrigin(0.5);
@@ -545,24 +688,75 @@ export class MainMenuScene extends Phaser.Scene {
     ].join('\n'), {
       fontFamily: 'Georgia, serif',
       fontSize: '14px',
-      color: '#4a3020',
+      color: '#c0c0c0',
       align: 'center',
     });
     creditsText.setOrigin(0.5);
 
-    const closeBtn = this.add.text(width / 2, height / 2 + 110, '[Close]', {
+    const closeBtn = this.add.text(width / 2, height / 2 + 110, '[ Close ]', {
       fontFamily: 'Georgia, serif',
       fontSize: '18px',
-      color: '#8b6914',
+      color: '#c9a227',
     });
     closeBtn.setOrigin(0.5);
     closeBtn.setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => {
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ffd700'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#c9a227'));
+
+    const closeDialog = () => {
       overlay.destroy();
       panel.destroy();
       creditsTitle.destroy();
       creditsText.destroy();
       closeBtn.destroy();
-    });
+    };
+
+    closeBtn.on('pointerdown', closeDialog);
+
+    // ESC key to close dialog
+    this.input.keyboard?.once('keydown-ESC', closeDialog);
+  }
+
+  private lerpColor(color1: number, color2: number, t: number): number {
+    const r1 = (color1 >> 16) & 0xff;
+    const g1 = (color1 >> 8) & 0xff;
+    const b1 = color1 & 0xff;
+
+    const r2 = (color2 >> 16) & 0xff;
+    const g2 = (color2 >> 8) & 0xff;
+    const b2 = color2 & 0xff;
+
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const b = Math.round(b1 + (b2 - b1) * t);
+
+    return (r << 16) | (g << 8) | b;
+  }
+
+  /**
+   * Clean up all event listeners and resources when scene shuts down
+   */
+  shutdown(): void {
+    // Remove keyboard event listeners
+    this.input.keyboard?.off('keydown-UP');
+    this.input.keyboard?.off('keydown-DOWN');
+    this.input.keyboard?.off('keydown-ENTER');
+    this.input.keyboard?.off('keydown-SPACE');
+
+    // Destroy particle emitter
+    if (this.dustParticles) {
+      this.dustParticles.destroy();
+    }
+
+    // Clean up torch lights
+    for (const light of this.torchLights) {
+      if (light && light.active) {
+        light.destroy();
+      }
+    }
+    this.torchLights = [];
+
+    // Clean up menu items
+    this.menuItems = [];
   }
 }

@@ -548,4 +548,20 @@ export class AchievementSystem {
       completion: this.getCompletionPercentage(),
     });
   }
+
+  /**
+   * Clean up event listeners to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('goldChange');
+    this.scene.events.off('playerBuy');
+    this.scene.events.off('playerSell');
+    this.scene.events.off('contractCompleted');
+    this.scene.events.off('expeditionCompleted');
+    this.scene.events.off('npcInteraction');
+    this.scene.events.off('questCompleted');
+    this.scene.events.off('reputationLevelChange');
+    this.scene.events.off('rankUp');
+    this.scene.events.off('newDay');
+  }
 }

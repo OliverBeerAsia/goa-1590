@@ -537,11 +537,56 @@ export class SaveSystem {
       return this.pendingSaveData.player;
     }
 
+    // Try to get actual player data from MarketScene
+    try {
+      const marketScene = this.scene.scene.get('MarketScene') as { getPlayer?: () => {
+        getSaveData: () => { gold: number; inventory: { item: string; quantity: number }[]; skills: Record<string, number> };
+        getGold: () => number;
+        getInventory: () => { item: string; quantity: number }[];
+        x: number;
+        y: number;
+      } };
+
+      if (marketScene?.getPlayer) {
+        const player = marketScene.getPlayer();
+        if (player) {
+          // Get current location from WorldSystem
+          const worldSystem = this.scene.registry.get('worldSystem') as { getCurrentLocation?: () => { id: string } | null };
+          const currentLocation = worldSystem?.getCurrentLocation?.()?.id || 'ribeira_grande';
+
+          // Use getSaveData() if available, otherwise get individual properties
+          if (player.getSaveData) {
+            const saveData = player.getSaveData();
+            return {
+              position: {
+                location: currentLocation,
+                x: player.x,
+                y: player.y,
+              },
+              inventory: saveData.inventory,
+              gold: saveData.gold,
+            };
+          } else {
+            return {
+              position: {
+                location: currentLocation,
+                x: player.x,
+                y: player.y,
+              },
+              inventory: player.getInventory(),
+              gold: player.getGold(),
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('SaveSystem: Could not get player data from MarketScene, using defaults', e);
+    }
+
     // Default/fallback player data
-    // In a full implementation, this would query the Player entity
     return {
       position: {
-        location: 'ribeira-grande',
+        location: 'ribeira_grande',
         x: 400,
         y: 300,
       },
@@ -559,13 +604,64 @@ export class SaveSystem {
       return this.pendingSaveData.world;
     }
 
+    // Try to get actual world data from systems
+    try {
+      // Get TimeSystem from MarketScene
+      const marketScene = this.scene.scene.get('MarketScene') as {
+        getTimeSystem?: () => { getTimeData: () => { hour: number; dayCount: number } };
+      };
+
+      // Get WorldSystem from registry
+      const worldSystem = this.scene.registry.get('worldSystem') as {
+        getCurrentLocation?: () => { id: string } | null;
+      };
+
+      let hour = 7;
+      let day = 1;
+      let currentLocation = 'ribeira_grande';
+
+      // Get time data
+      if (marketScene?.getTimeSystem) {
+        const timeSystem = marketScene.getTimeSystem();
+        if (timeSystem?.getTimeData) {
+          const timeData = timeSystem.getTimeData();
+          hour = timeData.hour;
+          day = timeData.dayCount;
+        }
+      }
+
+      // Get current location
+      if (worldSystem?.getCurrentLocation) {
+        const location = worldSystem.getCurrentLocation();
+        if (location?.id) {
+          currentLocation = location.id;
+        }
+      } else {
+        // Fallback: check registry for currentLocation
+        const registryLocation = this.scene.registry.get('currentLocation');
+        if (registryLocation) {
+          currentLocation = registryLocation;
+        }
+      }
+
+      return {
+        currentTime: {
+          hour,
+          day,
+        },
+        currentLocation,
+      };
+    } catch (e) {
+      console.warn('SaveSystem: Could not get world data, using defaults', e);
+    }
+
     // Default world data
     return {
       currentTime: {
         hour: 7,
         day: 1,
       },
-      currentLocation: 'ribeira-grande',
+      currentLocation: 'ribeira_grande',
     };
   }
 
@@ -625,6 +721,31 @@ export class SaveSystem {
   private gatherWeatherData(): WeatherSaveData {
     if (this.pendingSaveData.weather) {
       return this.pendingSaveData.weather;
+    }
+
+    // Try to get actual weather data from MarketScene
+    try {
+      const marketScene = this.scene.scene.get('MarketScene') as {
+        getWeatherSystem?: () => {
+          getCurrentWeather: () => { type: string };
+          getCurrentSeason: () => string;
+        };
+      };
+
+      if (marketScene?.getWeatherSystem) {
+        const weatherSystem = marketScene.getWeatherSystem();
+        if (weatherSystem) {
+          const weatherState = weatherSystem.getCurrentWeather();
+          const season = weatherSystem.getCurrentSeason();
+
+          return {
+            current: weatherState?.type || 'clear',
+            season: season || 'dry',
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('SaveSystem: Could not get weather data, using defaults', e);
     }
 
     // Default weather data
@@ -890,5 +1011,14 @@ export class SaveSystem {
    */
   public getVersion(): string {
     return SAVE_VERSION;
+  }
+
+  /**
+   * Clean up event listeners and data to prevent memory leaks
+   */
+  public destroy(): void {
+    this.scene.events.off('locationChange');
+    this.scene.events.off('saveDataResponse');
+    this.pendingSaveData = {};
   }
 }

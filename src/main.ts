@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { IntroScene } from './scenes/IntroScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { MarketScene } from './scenes/MarketScene';
 import { UIScene } from './scenes/UIScene';
@@ -8,8 +9,8 @@ import { UIScene } from './scenes/UIScene';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: 1024,
-  height: 768,
+  width: 1280,
+  height: 720,
   pixelArt: true,
   backgroundColor: '#1E3A5F', // Portuguese blue from our palette
   physics: {
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, MainMenuScene, MarketScene, UIScene],
+  scene: [BootScene, IntroScene, MainMenuScene, MarketScene, UIScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

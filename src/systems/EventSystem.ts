@@ -543,9 +543,11 @@ export class EventSystem {
   }
 
   /**
-   * Cleanup
+   * Clean up event listeners and data to prevent memory leaks
    */
   public destroy(): void {
+    this.scene.events.off('newDay');
+    this.scene.events.off('seasonChange');
     this.scheduledEvents = [];
     this.activeEvents = [];
   }

@@ -827,6 +827,11 @@ export class WeatherSystem {
 
   // Cleanup
   public destroy(): void {
+    // Remove event listeners
+    this.scene.events.off('hourChange');
+    this.scene.events.off('newDay');
+    this.scene.events.off('periodChange');
+
     if (this.transitionTween) {
       this.transitionTween.stop();
     }
